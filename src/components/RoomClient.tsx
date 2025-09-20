@@ -1,5 +1,3 @@
-// src/components/RoomClient.tsx
-
 'use client';
 
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
@@ -26,7 +24,7 @@ import SearchTab from '@/components/SearchTab';
 // Types
 import { VideoItem } from '@/types/room';
 
-// ✨ NEW: Define the type for our search platform
+// Define the type for our search platform
 export type SearchPlatform = 'youtube' | 'twitch';
 
 export default function RoomClient({ roomId }: { roomId: string }) {
@@ -36,8 +34,8 @@ export default function RoomClient({ roomId }: { roomId: string }) {
   const [nextVideoMessage, setNextVideoMessage] = useState<string | null>(null);
   const [videoHasEnded, setVideoHasEnded] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'shuffle'>('list');
+  const [showUpdateNameModal, setShowUpdateNameModal] = useState(false); // State for update modal
 
-  // ✨ NEW: State for the search platform switcher, managed here in the parent component
   const [searchPlatform, setSearchPlatform] = useState<SearchPlatform>('youtube');
 
   const playerRef = useRef<PlayerRef | null>(null);
@@ -76,6 +74,9 @@ export default function RoomClient({ roomId }: { roomId: string }) {
     removeModerator,
     kickUser,
     banUser,
+    removePlaylistItem,
+    movePlaylistItem,
+    updateUsername, // Get the new function from the hook
   } = useRoomSocket(roomId, userId, username, initialHistory, initialVideoUrl, initialPlaylist, viewMode, getPlayerState);
 
   const isController = useMemo(() => {
@@ -135,7 +136,17 @@ export default function RoomClient({ roomId }: { roomId: string }) {
       if (member) setUsername(member.username);
     }
   }, [username, roomData, userId]);
-  
+
+  // Update username when membersUpdate is received
+  useEffect(() => {
+    if (userId && members.length) {
+      const member = members.find((m) => m.userId === userId);
+      if (member && member.username !== username) {
+        setUsername(member.username);
+      }
+    }
+  }, [members, userId, username]);
+
   const handleSelectVideo = (videoUrl: string) => {
     if (isController) {
       changeVideo(videoUrl);
@@ -144,10 +155,17 @@ export default function RoomClient({ roomId }: { roomId: string }) {
     }
   };
 
+  const handleUpdateUsername = (newName: string) => {
+    if (newName !== username) {
+      updateUsername(newName);
+    }
+    setShowUpdateNameModal(false);
+  };
+
   if (loading) {
     return (
       <div className="flex bg-[#1f1f1f] min-h-screen text-white items-center justify-center">
-        <Sidebar />
+        <Sidebar username={username} onProfileClick={() => setShowUpdateNameModal(true)} />
         <main className="ml-24 flex-1"></main>
       </div>
     );
@@ -160,9 +178,8 @@ export default function RoomClient({ roomId }: { roomId: string }) {
 
   return (
     <div className="flex bg-[#1f1f1f] min-h-screen text-white">
-      <Sidebar />
+      <Sidebar username={username} onProfileClick={() => setShowUpdateNameModal(true)} />
       <main className="ml-24 flex-1 pt-2 px-6 pb-6 flex flex-col">
-        {/* ✨ UPDATED: Pass the new state and setter to the header */}
         <RoomHeader
           roomData={roomData}
           timeLeft={timeLeft}
@@ -172,7 +189,7 @@ export default function RoomClient({ roomId }: { roomId: string }) {
           setSearchPlatform={setSearchPlatform}
         />
         <div className="flex gap-6 items-start">
-          <div className="w-[75%] flex flex-col gap-4">
+          <div className="flex-1 flex flex-col gap-4 min-w-0 max-w-[70%]">
             <div className="w-full bg-black rounded-lg border border-gray-700 aspect-[16/9] min-h-[400px]">
               <VideoPlayer
                 ref={playerRef}
@@ -185,7 +202,6 @@ export default function RoomClient({ roomId }: { roomId: string }) {
               />
             </div>
             <div className="w-full rounded-lg border border-gray-700 bg-gray-800/50 min-h-[75vh]">
-              {/* ✨ UPDATED: Pass the platform to the search tab */}
               <SearchTab
                 results={searchResults}
                 isLoading={isSearchLoading}
@@ -216,14 +232,36 @@ export default function RoomClient({ roomId }: { roomId: string }) {
                 isHistoryLoading,
                 playlistVideos,
                 isPlaylistLoading,
+                removePlaylistItem,
+                movePlaylistItem,
+                isController,
               }}
             />
           </div>
         </div>
-        {(needsToJoin || showInvite) && (
+        
+        {/* Modal rendering logic */}
+        {(needsToJoin || showInvite || showUpdateNameModal) && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-50">
-            {needsToJoin && <NameBox onJoin={(name) => setUsername(name)} roomId={roomId} />}
-            {showInvite && <InviteBox roomUrl={`${window.location.origin}/room/${roomId}`} onClose={closeInvitePrompt} />}
+            {needsToJoin && (
+              <NameBox
+                mode="join"
+                onConfirm={(name) => setUsername(name)}
+                roomId={roomId}
+              />
+            )}
+            {showInvite && (
+              <InviteBox roomUrl={`${window.location.origin}/room/${roomId}`} onClose={closeInvitePrompt} />
+            )}
+            {showUpdateNameModal && !needsToJoin && (
+              <NameBox
+                mode="update"
+                onConfirm={handleUpdateUsername}
+                roomId={roomId}
+                currentUsername={username}
+                onClose={() => setShowUpdateNameModal(false)}
+              />
+            )}
           </div>
         )}
       </main>

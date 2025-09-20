@@ -9,17 +9,21 @@ import type { SearchPlatform } from './RoomClient';
 
 // SVG components for the logos
 const YouTubeLogo = () => (
-  <svg viewBox="0 0 28 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-6 h-auto">
+  <svg viewBox="0 0 28 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-5 w-auto">
     <path d="M27.344 3.094c-.312-1.156-.937-2.03-2.093-2.343C23.219 0 14 0 14 0S4.78 0 2.75 0.75C1.593 1.062.968 1.937.656 3.094 0 5.28 0 10 0 10s0 4.72.656 6.906c.312 1.156.937 2.032 2.093 2.344C4.78 20 14 20 14 20s9.219 0 11.25-.75c1.156-.313 1.781-1.188 2.093-2.344C28 14.72 28 10 28 10s0-4.72-.656-6.906z" fill="#FF0000"></path>
     <path d="M11.25 14.375V5.625l7.5 4.375-7.5 4.375z" fill="#FFFFFF"></path>
   </svg>
 );
 
+// ✨ UPDATED: New, solid Twitch "Glitch" icon
 const TwitchLogo = () => (
-  <svg viewBox="0 0 24 28" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-6 h-auto">
-    <path d="M19.467 4.8L16 8.267V22.4H12.533V26.867H9.067L5.6 30.333H0V5.867L4.467 0H21.2L19.467 4.8ZM4.467 22.4H6.2V6.933H2.733V24.133H6.2L9.667 20.667H16V6.933H19.467L21.2 2.067H6.2L4.467 5.867V22.4ZM14.267 9.333H12.533V16.267H14.267V9.333ZM10.133 9.333H8.4V16.267H10.133V9.333Z" fill="#9146FF"></path>
+  <svg role="img" viewBox="0 0 24 28" xmlns="http://www.w3.org/2000/svg" className="h-6 w-auto">
+    <path d="M3.793 0L0 3.793V24.207H6.322V28L10.115 24.207H15.655L24 15.862V0H3.793Z" fill="#9146FF" />
+    <path d="M18.069 12.621H15.931V6.897H18.069V12.621Z" fill="#FFFFFF"/>
+    <path d="M12.431 12.621H10.293V6.897H12.431V12.621Z" fill="#FFFFFF"/>
   </svg>
 );
+
 
 const URL_REGEX = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be|twitch\.tv)\/.+$/;
 
@@ -102,11 +106,12 @@ export default function RoomHeader({
 
       {/* Center: Search Bar */}
       <form onSubmit={handleSearchSubmit} className="relative w-full max-w-lg justify-self-center flex items-center gap-2">
+        {/* ✨ UPDATED: Button now has a fixed size to prevent layout shifts */}
         <button
           type="button"
           onClick={togglePlatform}
           title={`Switch to ${searchPlatform === 'youtube' ? 'Twitch' : 'YouTube'}`}
-          className="flex-shrink-0 p-2 rounded-lg bg-gray-800 border-2 border-gray-700/50 hover:border-gray-600 transition-colors"
+          className="flex-shrink-0 h-11 w-11 flex items-center justify-center rounded-lg bg-gray-800 border-2 border-gray-700/50 hover:border-gray-600 transition-colors"
         >
           {searchPlatform === 'youtube' ? <YouTubeLogo /> : <TwitchLogo />}
         </button>
@@ -118,7 +123,7 @@ export default function RoomHeader({
             placeholder={`Search on ${searchPlatform}...`}
             value={searchInput}
             onChange={handleSearchInputChange}
-            className="w-full bg-gray-800 border-2 border-gray-700/50 rounded-lg pl-11 pr-4 py-2 text-white placeholder-gray-500 transition-colors duration-200 focus:outline-none focus:border-blue-500"
+            className="w-full h-11 bg-gray-800 border-2 border-gray-700/50 rounded-lg pl-11 pr-4 text-white placeholder-gray-500 transition-colors duration-200 focus:outline-none focus:border-blue-500"
           />
         </div>
       </form>

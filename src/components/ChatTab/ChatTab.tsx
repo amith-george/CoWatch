@@ -1,3 +1,5 @@
+// src/components/ChatTab/ChatTab.tsx
+
 'use client';
 
 import { useState } from 'react';
@@ -26,6 +28,9 @@ interface ChatTabProps {
   isHistoryLoading: boolean;
   playlistVideos: VideoItem[];
   isPlaylistLoading: boolean;
+  removePlaylistItem: (videoUrl: string) => void;
+  movePlaylistItem: (videoUrl: string, direction: 'up' | 'down') => void;
+  isController: boolean; // Add this
 }
 
 export default function ChatTab({
@@ -45,6 +50,9 @@ export default function ChatTab({
   isHistoryLoading,
   playlistVideos,
   isPlaylistLoading,
+  removePlaylistItem,
+  movePlaylistItem,
+  isController, // Destructure new prop
 }: ChatTabProps) {
   const [openMenuFor, setOpenMenuFor] = useState<string | null>(null);
 
@@ -87,6 +95,9 @@ export default function ChatTab({
                   setViewMode={setViewMode}
                   videos={playlistVideos}
                   isLoading={isPlaylistLoading}
+                  onRemovePlaylistItem={removePlaylistItem}
+                  onMovePlaylistItem={movePlaylistItem}
+                  isController={isController} // Pass to PlaylistsPanel
                 />
               </div>
             )}

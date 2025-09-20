@@ -1,5 +1,3 @@
-// src/components/SearchTab/SearchTab.tsx
-
 'use client';
 
 import Image from 'next/image';
@@ -12,7 +10,7 @@ interface SearchTabProps {
   isLoading: boolean;
   isPopular: boolean;
   onSelectVideo: (videoUrl: string) => void;
-  onAddToPlaylist: (videoUrl:string) => void;
+  onAddToPlaylist: (videoUrl: string) => void;
   searchQuery?: string;
   searchPlatform: SearchPlatform;
 }
@@ -20,14 +18,21 @@ interface SearchTabProps {
 const VideoCard = ({ video, onSelectVideo, onAddToPlaylist, isPriority }: { video: VideoItem; onSelectVideo: (url: string) => void; onAddToPlaylist: (url: string) => void; isPriority: boolean; }) => {
   const handlePlay = (e: React.MouseEvent) => { e.stopPropagation(); onSelectVideo(video.videoUrl); };
   const handleAdd = (e: React.MouseEvent) => { e.stopPropagation(); onAddToPlaylist(video.videoUrl); };
+
+  // Truncate title to 70 characters at the last word boundary
+  const maxTitleLength = 90;
+  const truncatedTitle = video.title.length > maxTitleLength 
+    ? video.title.slice(0, video.title.lastIndexOf(' ', maxTitleLength)) + '...'
+    : video.title;
+
   return (
-    <div className="flex items-center gap-4 p-2 rounded-lg hover:bg-gray-700/50 transition-colors duration-150 group cursor-pointer" onClick={handlePlay}>
+    <div className="flex items-center gap-4 p-2 rounded-lg hover:bg-gray-700/50 transition-colors duration-150 group cursor-pointer">
       <div className="relative w-32 h-18 flex-shrink-0">
         <Image src={video.thumbnailUrl} alt={video.title} fill sizes="128px" style={{ objectFit: 'cover' }} className="rounded-md shadow-md" priority={isPriority} />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent rounded-md"></div>
       </div>
       <div className="flex-grow min-w-0">
-        <p className="text-sm font-semibold text-white truncate" title={video.title}>{video.title}</p>
+        <p className="text-sm font-semibold text-white truncate" title={video.title}>{truncatedTitle}</p>
         <p className="text-xs text-gray-400 truncate">{video.channelTitle}</p>
       </div>
       <div className="ml-auto flex items-center gap-2 scale-90 opacity-0 group-hover:opacity-100 group-hover:scale-100 transition-all duration-200">
@@ -48,14 +53,13 @@ const VideoCardSkeleton = () => (
   </div>
 );
 
-
 export default function SearchTab({ results, isLoading, isPopular, onSelectVideo, onAddToPlaylist, searchQuery, searchPlatform }: SearchTabProps) {
   if (isLoading) {
     return (
       <div className="w-full h-full bg-transparent p-4 flex flex-col">
         <div className="flex items-center gap-2 text-lg font-bold text-white mb-4 shrink-0 animate-pulse">
-            <div className="w-6 h-6 bg-gray-600 rounded-full"></div>
-            <div className="w-48 h-6 bg-gray-600 rounded"></div>
+          <div className="w-6 h-6 bg-gray-600 rounded-full"></div>
+          <div className="w-48 h-6 bg-gray-600 rounded"></div>
         </div>
         <div className="space-y-3 pr-2">
           {[...Array(4)].map((_, i) => <VideoCardSkeleton key={i} />)}
@@ -79,21 +83,25 @@ export default function SearchTab({ results, isLoading, isPopular, onSelectVideo
     }
     return searchQuery ? `Results for "${searchQuery}"` : "Search Results";
   };
+  
+  const headerText = getHeaderText();
 
   return (
     <div className="w-full h-full bg-transparent p-4 flex flex-col">
-      <div className="flex items-center gap-2 text-lg font-bold text-white mb-4 shrink-0">
+      <div className="flex items-center gap-2 text-lg font-bold text-white mb-4 shrink-0 min-w-0">
         {isPopular ? (
-          <FireIcon className="w-6 h-6 text-orange-400" />
+          <FireIcon className="w-6 h-6 text-orange-400 flex-shrink-0" />
         ) : (
-          <MagnifyingGlassIcon className="w-6 h-6 text-blue-400" />
+          <MagnifyingGlassIcon className="w-6 h-6 text-blue-400 flex-shrink-0" />
         )}
-        <h3>{getHeaderText()}</h3>
+        <h3 className="truncate" title={headerText}>{headerText}</h3>
         {!isPopular && results.length > 0 && (
-          <span className="text-sm font-normal text-gray-400 ml-2">({results.length} result{results.length !== 1 ? 's' : ''})</span>
+          <span className="text-sm font-normal text-gray-400 ml-2 flex-shrink-0">
+            ({results.length} result{results.length !== 1 ? 's' : ''})
+          </span>
         )}
       </div>
-      <div className="search-results-container space-y-3 overflow-y-auto flex-grow pr-2">
+      <div className="search-results-container space-y-3 overflow-y-auto flex-grow pr-2 max-w-full">
         {results.map((video, index) => (
           <VideoCard 
             key={video.videoUrl}

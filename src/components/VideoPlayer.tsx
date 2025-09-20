@@ -28,7 +28,7 @@ const Player = dynamic(() => import('react-player'), { ssr: false });
 
 const VideoPlayer = forwardRef<PlayerRef, VideoPlayerProps>(
   ({ url, isController, onVideoEnded, isAgeRestricted, playerState, onStateChange }, ref) => {
-    const [isPlaying, setIsPlaying] = useState(true);
+    const [isPlaying, setIsPlaying] = useState(false);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [isWaitingForHost, setIsWaitingForHost] = useState(false);
     const playerWrapperRef = useRef<HTMLDivElement>(null);

@@ -11,7 +11,7 @@ export interface PlayerState {
   status: 1 | 2 | 3 | 0;
 }
 
-// [NEW] Define a type for the complete initial state payload
+// Define a type for the complete initial state payload
 export interface InitialState extends PlayerState {
   videoUrl?: string; // videoUrl is optional for other sync events
 }
@@ -91,11 +91,8 @@ export function useRoomSocket(
     }
 
     const handleSyncState = (state: InitialState) => {
-      // [DEBUG] This log confirms the VIEWER received the event
       console.log('%cVIEWER: Received syncPlayerState:', 'color: green; font-weight: bold;', state);
-
       setPlayerState({ time: state.time, status: state.status });
-
       if (state.videoUrl) {
         setCurrentVideoUrl(state.videoUrl);
       }
@@ -125,7 +122,10 @@ export function useRoomSocket(
     };
     socket.on('videoUpdate', handleVideoUpdate);
 
-    const handlePlaylistUpdate = ({ playlist: newPlaylist }: { playlist: string[] }) => setPlaylist(newPlaylist);
+    const handlePlaylistUpdate = ({ playlist: newPlaylist }: { playlist: string[] }) => {
+      console.log('Received playlistUpdate:', newPlaylist); // Debug log
+      setPlaylist(newPlaylist);
+    };
     socket.on('playlistUpdate', handlePlaylistUpdate);
 
     const handleKicked = (data: { message: string }) => {
@@ -140,7 +140,17 @@ export function useRoomSocket(
     };
     socket.on('banned', handleBanned);
 
-    socket.on('error', (data) => console.error('Socket error:', data.message));
+    socket.on('error', (data) => {
+      // Log as info instead of error for expected user-facing errors
+      if (data.message.includes('This username is already taken') || 
+          data.message.includes('Username must be between 2 and 20 characters') || 
+          data.message.includes('User not found in this room')) {
+        console.info('User-facing socket message:', data.message);
+      } else {
+        console.error('Socket error:', data.message);
+        alert(`Error: ${data.message}`); // Only alert for unexpected errors
+      }
+    });
 
     return () => {
       socket.off('connect', handleConnect);
@@ -165,7 +175,6 @@ export function useRoomSocket(
 
   const sendPlayerStateChange = useCallback(
     (state: PlayerState) => {
-      // [DEBUG] This log confirms the HOST is sending the event
       console.log('%cHOST: Emitting playerStateChange:', 'color: orange; font-weight: bold;', state);
       socket.emit('playerStateChange', { roomId, state });
     },
@@ -180,9 +189,20 @@ export function useRoomSocket(
     },
     [roomId, username]
   );
+  
+  const updateUsername = useCallback(
+    (newUsername: string) => {
+      if (socket && userId) {
+        console.log('Emitting updateUsername:', { roomId, userId, newUsername });
+        socket.emit('updateUsername', { roomId, userId, newUsername });
+      }
+    },
+    [roomId, userId]
+  );
 
   const changeVideo = useCallback(
     (videoUrl: string) => {
+      console.log('Emitting changeVideo:', { roomId, videoUrl }); // Debug log
       socket.emit('changeVideo', { roomId, videoUrl });
     },
     [roomId]
@@ -190,17 +210,36 @@ export function useRoomSocket(
 
   const addToPlaylist = useCallback(
     (videoUrl: string) => {
+      console.log('Emitting addToPlaylist:', { roomId, videoUrl }); // Debug log
       socket.emit('addToPlaylist', { roomId, videoUrl });
     },
     [roomId]
   );
 
   const playNextVideo = useCallback(() => {
+    console.log('Emitting playNextInQueue:', { roomId, mode: viewMode }); // Debug log
     socket.emit('playNextInQueue', { roomId, mode: viewMode });
   }, [roomId, viewMode]);
 
+  const removePlaylistItem = useCallback(
+    (videoUrl: string) => {
+      console.log('Emitting removePlaylistItem:', { roomId, videoUrl }); // Debug log
+      socket.emit('removePlaylistItem', { roomId, videoUrl });
+    },
+    [roomId]
+  );
+
+  const movePlaylistItem = useCallback(
+    (videoUrl: string, direction: 'up' | 'down') => {
+      console.log('Emitting movePlaylistItem:', { roomId, videoUrl, direction }); // Debug log
+      socket.emit('movePlaylistItem', { roomId, videoUrl, direction });
+    },
+    [roomId]
+  );
+
   const makeModerator = useCallback(
     (targetUserId: string) => {
+      console.log('Emitting makeModerator:', { roomId, targetUserId }); // Debug log
       socket.emit('makeModerator', { roomId, targetUserId });
     },
     [roomId]
@@ -208,6 +247,7 @@ export function useRoomSocket(
 
   const removeModerator = useCallback(
     (targetUserId: string) => {
+      console.log('Emitting removeModerator:', { roomId, targetUserId }); // Debug log
       socket.emit('removeModerator', { roomId, targetUserId });
     },
     [roomId]
@@ -215,6 +255,7 @@ export function useRoomSocket(
 
   const kickUser = useCallback(
     (targetUserId: string) => {
+      console.log('Emitting kickUser:', { roomId, targetUserId }); // Debug log
       socket.emit('kickUser', { roomId, targetUserId });
     },
     [roomId]
@@ -222,6 +263,7 @@ export function useRoomSocket(
 
   const banUser = useCallback(
     (targetUserId: string) => {
+      console.log('Emitting banUser:', { roomId, targetUserId }); // Debug log
       socket.emit('banUser', { roomId, targetUserId });
     },
     [roomId]
@@ -239,9 +281,12 @@ export function useRoomSocket(
     changeVideo,
     addToPlaylist,
     playNextVideo,
+    removePlaylistItem,
+    movePlaylistItem,
     makeModerator,
     removeModerator,
     kickUser,
     banUser,
+    updateUsername,
   };
 }
