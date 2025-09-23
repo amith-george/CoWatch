@@ -1,16 +1,21 @@
+// src/components/RoomClient.tsx
+
 'use client';
 
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+// ✨ 1. Import ToastContainer
+import { toast, ToastContainer } from 'react-toastify';
 
 // Custom Hooks
-import { useRoomSocket, PlayerState } from '@/hooks/useRoomSocket';
+import { useRoomSocket, PlayerState, ScreenShareRequest } from '@/hooks/useRoomSocket';
 import { useRoomData } from '@/hooks/useRoomData';
 import { useCountdown } from '@/hooks/useCountdown';
 import { useSearch } from '@/hooks/useSearch';
 import { useScrollLock } from '@/hooks/useScrollLock';
 import { useInvitePrompt } from '@/hooks/useInvitePrompt';
 import { useVideoMetadata } from '@/hooks/useVideoMetadata';
+import { useScreenShare } from '@/hooks/useScreenShare';
 
 // Components
 import Sidebar from '@/components/Sidebar';
@@ -27,6 +32,32 @@ import { VideoItem } from '@/types/room';
 // Define the type for our search platform
 export type SearchPlatform = 'youtube' | 'twitch';
 
+// Custom component for the screen share request toast
+const RequestToast = ({ request, onAccept, onDecline }: {
+  request: ScreenShareRequest;
+  onAccept: () => void;
+  onDecline: () => void;
+}) => (
+  <div>
+    <p className="font-semibold">{request.requesterUsername} wants to screen share.</p>
+    <div className="flex justify-end gap-2 mt-3">
+      <button
+        onClick={onDecline}
+        className="px-3 py-1 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
+      >
+        Decline
+      </button>
+      <button
+        onClick={onAccept}
+        className="px-3 py-1 text-sm font-medium text-black bg-green-500 rounded-md hover:bg-green-600"
+      >
+        Accept
+      </button>
+    </div>
+  </div>
+);
+
+
 export default function RoomClient({ roomId }: { roomId: string }) {
   const router = useRouter();
   const [username, setUsername] = useState<string | null>(null);
@@ -34,7 +65,7 @@ export default function RoomClient({ roomId }: { roomId: string }) {
   const [nextVideoMessage, setNextVideoMessage] = useState<string | null>(null);
   const [videoHasEnded, setVideoHasEnded] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'shuffle'>('list');
-  const [showUpdateNameModal, setShowUpdateNameModal] = useState(false); // State for update modal
+  const [showUpdateNameModal, setShowUpdateNameModal] = useState(false);
 
   const [searchPlatform, setSearchPlatform] = useState<SearchPlatform>('youtube');
 
@@ -76,8 +107,16 @@ export default function RoomClient({ roomId }: { roomId: string }) {
     banUser,
     removePlaylistItem,
     movePlaylistItem,
-    updateUsername, // Get the new function from the hook
+    updateUsername,
+    requestScreenShare,
+    respondToScreenShare,
+    screenShareRequest,
+    screenSharePermissionGranted,
+    resetScreenSharePermission,
   } = useRoomSocket(roomId, userId, username, initialHistory, initialVideoUrl, initialPlaylist, viewMode, getPlayerState);
+
+  const { isSharing, isViewing, screenStream, localStream, startSharing, stopSharing } = useScreenShare(roomId, members);
+
 
   const isController = useMemo(() => {
     if (!userId || !members.length) return false;
@@ -86,6 +125,41 @@ export default function RoomClient({ roomId }: { roomId: string }) {
     const self = members.find(m => m.userId === userId);
     return self?.role === 'Moderator';
   }, [userId, members]);
+
+  const isHost = useMemo(() => {
+    if (!userId || !members.length) return false;
+    const self = members.find(m => m.userId === userId);
+    return self?.role === 'Host';
+  }, [userId, members]);
+
+
+  useEffect(() => {
+    if (isHost && screenShareRequest) {
+      const handleAccept = () => {
+        respondToScreenShare(screenShareRequest.requesterId, true);
+        toast.dismiss(`ssr-${screenShareRequest.requesterId}`);
+      };
+
+      const handleDecline = () => {
+        respondToScreenShare(screenShareRequest.requesterId, false);
+        toast.dismiss(`ssr-${screenShareRequest.requesterId}`);
+      };
+
+      toast(<RequestToast request={screenShareRequest} onAccept={handleAccept} onDecline={handleDecline} />, {
+        toastId: `ssr-${screenShareRequest.requesterId}`,
+        // This specific toast will not auto-close, overriding the global default
+        autoClose: false,
+      });
+    }
+  }, [screenShareRequest, isHost, respondToScreenShare]);
+
+  useEffect(() => {
+    if (screenSharePermissionGranted) {
+      startSharing();
+      resetScreenSharePermission();
+    }
+  }, [screenSharePermissionGranted, startSharing, resetScreenSharePermission]);
+
 
   const handleVideoEnded = useCallback(() => {
     if (isController) setVideoHasEnded(true);
@@ -137,7 +211,6 @@ export default function RoomClient({ roomId }: { roomId: string }) {
     }
   }, [username, roomData, userId]);
 
-  // Update username when membersUpdate is received
   useEffect(() => {
     if (userId && members.length) {
       const member = members.find((m) => m.userId === userId);
@@ -162,10 +235,21 @@ export default function RoomClient({ roomId }: { roomId: string }) {
     setShowUpdateNameModal(false);
   };
 
+  const handleScreenShareClick = () => {
+    if (isHost || isSharing) {
+      isSharing ? stopSharing() : startSharing();
+    } else {
+      requestScreenShare();
+      // ✨ 3. The autoClose option is no longer needed here
+      toast.info('Screen share request sent to the host.');
+    }
+  };
+
+
   if (loading) {
     return (
       <div className="flex bg-[#1f1f1f] min-h-screen text-white items-center justify-center">
-        <Sidebar username={username} onProfileClick={() => setShowUpdateNameModal(true)} />
+        <Sidebar username={username} onProfileClick={() => setShowUpdateNameModal(true)} onScreenShareClick={handleScreenShareClick} />
         <main className="ml-24 flex-1"></main>
       </div>
     );
@@ -178,7 +262,20 @@ export default function RoomClient({ roomId }: { roomId: string }) {
 
   return (
     <div className="flex bg-[#1f1f1f] min-h-screen text-white">
-      <Sidebar username={username} onProfileClick={() => setShowUpdateNameModal(true)} />
+      {/* ✨ 2. Add the ToastContainer to set a global default */}
+      <ToastContainer
+        position="bottom-right"
+        autoClose={10000} // 10 seconds
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+      />
+      <Sidebar username={username} onProfileClick={() => setShowUpdateNameModal(true)} onScreenShareClick={handleScreenShareClick} />
       <main className="ml-24 flex-1 pt-2 px-6 pb-6 flex flex-col">
         <RoomHeader
           roomData={roomData}
@@ -194,6 +291,9 @@ export default function RoomClient({ roomId }: { roomId: string }) {
               <VideoPlayer
                 ref={playerRef}
                 url={currentVideoUrl}
+                stream={isSharing ? localStream : (isViewing ? screenStream : null)}
+                isSharing={isSharing}
+                onStopSharing={stopSharing}
                 isController={isController}
                 onVideoEnded={handleVideoEnded}
                 isAgeRestricted={currentVideoMetadata?.isAgeRestricted}

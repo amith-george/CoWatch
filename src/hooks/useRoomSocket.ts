@@ -1,8 +1,11 @@
+// src/hooks/useRoomSocket.ts
+
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { socket } from '@/utils/socket';
 import { ChatMessage, Member } from '@/types/room';
+import { toast } from 'react-toastify';
 
 // Define a type for the player's state object for type safety
 export interface PlayerState {
@@ -14,6 +17,12 @@ export interface PlayerState {
 // Define a type for the complete initial state payload
 export interface InitialState extends PlayerState {
   videoUrl?: string; // videoUrl is optional for other sync events
+}
+
+// Define a type for the screen share request
+export interface ScreenShareRequest {
+  requesterId: string;
+  requesterUsername: string;
 }
 
 export function useRoomSocket(
@@ -32,6 +41,9 @@ export function useRoomSocket(
   const [currentVideoUrl, setCurrentVideoUrl] = useState<string>(initialVideoUrl);
   const [playlist, setPlaylist] = useState<string[]>(initialPlaylist);
   const [playerState, setPlayerState] = useState<PlayerState | null>(null);
+  const [screenShareRequest, setScreenShareRequest] = useState<ScreenShareRequest | null>(null);
+  // ✨ 1. Add new state to track screen share permission
+  const [screenSharePermissionGranted, setScreenSharePermissionGranted] = useState(false);
   const hasJoined = useRef(false);
 
   useEffect(() => {
@@ -123,7 +135,7 @@ export function useRoomSocket(
     socket.on('videoUpdate', handleVideoUpdate);
 
     const handlePlaylistUpdate = ({ playlist: newPlaylist }: { playlist: string[] }) => {
-      console.log('Received playlistUpdate:', newPlaylist); // Debug log
+      console.log('Received playlistUpdate:', newPlaylist);
       setPlaylist(newPlaylist);
     };
     socket.on('playlistUpdate', handlePlaylistUpdate);
@@ -140,15 +152,32 @@ export function useRoomSocket(
     };
     socket.on('banned', handleBanned);
 
+    const handleScreenShareRequest = (data: ScreenShareRequest) => {
+      console.log('Received screen share request:', data);
+      setScreenShareRequest(data);
+    };
+
+    // ✨ 2. Add listener to handle the host's response
+    const handleScreenSharePermission = ({ granted }: { granted: boolean }) => {
+      if (granted) {
+        setScreenSharePermissionGranted(true);
+        toast.success('Permission granted! You can now start sharing your screen.');
+      } else {
+        toast.error('Host declined your screen share request.');
+      }
+    };
+
+    socket.on('screenShareRequest', handleScreenShareRequest);
+    socket.on('screenSharePermission', handleScreenSharePermission);
+
     socket.on('error', (data) => {
-      // Log as info instead of error for expected user-facing errors
-      if (data.message.includes('This username is already taken') || 
-          data.message.includes('Username must be between 2 and 20 characters') || 
+      if (data.message.includes('This username is already taken') ||
+          data.message.includes('Username must be between 2 and 20 characters') ||
           data.message.includes('User not found in this room')) {
         console.info('User-facing socket message:', data.message);
       } else {
         console.error('Socket error:', data.message);
-        alert(`Error: ${data.message}`); // Only alert for unexpected errors
+        alert(`Error: ${data.message}`);
       }
     });
 
@@ -165,6 +194,8 @@ export function useRoomSocket(
       socket.off('syncPlayerState', handleSyncState);
       socket.off('initialState', handleSyncState);
       socket.off('getControllerState', handleGetControllerState);
+      socket.off('screenShareRequest', handleScreenShareRequest);
+      socket.off('screenSharePermission', handleScreenSharePermission);
 
       if (hasJoined.current && roomId && userId) {
         socket.emit('leaveRoom', { roomId, userId });
@@ -202,7 +233,7 @@ export function useRoomSocket(
 
   const changeVideo = useCallback(
     (videoUrl: string) => {
-      console.log('Emitting changeVideo:', { roomId, videoUrl }); // Debug log
+      console.log('Emitting changeVideo:', { roomId, videoUrl });
       socket.emit('changeVideo', { roomId, videoUrl });
     },
     [roomId]
@@ -210,20 +241,20 @@ export function useRoomSocket(
 
   const addToPlaylist = useCallback(
     (videoUrl: string) => {
-      console.log('Emitting addToPlaylist:', { roomId, videoUrl }); // Debug log
+      console.log('Emitting addToPlaylist:', { roomId, videoUrl });
       socket.emit('addToPlaylist', { roomId, videoUrl });
     },
     [roomId]
   );
 
   const playNextVideo = useCallback(() => {
-    console.log('Emitting playNextInQueue:', { roomId, mode: viewMode }); // Debug log
+    console.log('Emitting playNextInQueue:', { roomId, mode: viewMode });
     socket.emit('playNextInQueue', { roomId, mode: viewMode });
   }, [roomId, viewMode]);
 
   const removePlaylistItem = useCallback(
     (videoUrl: string) => {
-      console.log('Emitting removePlaylistItem:', { roomId, videoUrl }); // Debug log
+      console.log('Emitting removePlaylistItem:', { roomId, videoUrl });
       socket.emit('removePlaylistItem', { roomId, videoUrl });
     },
     [roomId]
@@ -231,7 +262,7 @@ export function useRoomSocket(
 
   const movePlaylistItem = useCallback(
     (videoUrl: string, direction: 'up' | 'down') => {
-      console.log('Emitting movePlaylistItem:', { roomId, videoUrl, direction }); // Debug log
+      console.log('Emitting movePlaylistItem:', { roomId, videoUrl, direction });
       socket.emit('movePlaylistItem', { roomId, videoUrl, direction });
     },
     [roomId]
@@ -239,7 +270,7 @@ export function useRoomSocket(
 
   const makeModerator = useCallback(
     (targetUserId: string) => {
-      console.log('Emitting makeModerator:', { roomId, targetUserId }); // Debug log
+      console.log('Emitting makeModerator:', { roomId, targetUserId });
       socket.emit('makeModerator', { roomId, targetUserId });
     },
     [roomId]
@@ -247,7 +278,7 @@ export function useRoomSocket(
 
   const removeModerator = useCallback(
     (targetUserId: string) => {
-      console.log('Emitting removeModerator:', { roomId, targetUserId }); // Debug log
+      console.log('Emitting removeModerator:', { roomId, targetUserId });
       socket.emit('removeModerator', { roomId, targetUserId });
     },
     [roomId]
@@ -255,7 +286,7 @@ export function useRoomSocket(
 
   const kickUser = useCallback(
     (targetUserId: string) => {
-      console.log('Emitting kickUser:', { roomId, targetUserId }); // Debug log
+      console.log('Emitting kickUser:', { roomId, targetUserId });
       socket.emit('kickUser', { roomId, targetUserId });
     },
     [roomId]
@@ -263,11 +294,21 @@ export function useRoomSocket(
 
   const banUser = useCallback(
     (targetUserId: string) => {
-      console.log('Emitting banUser:', { roomId, targetUserId }); // Debug log
+      console.log('Emitting banUser:', { roomId, targetUserId });
       socket.emit('banUser', { roomId, targetUserId });
     },
     [roomId]
   );
+
+  const requestScreenShare = useCallback(() => {
+    socket.emit('screenShareRequest', { roomId });
+  }, [roomId]);
+
+  const respondToScreenShare = useCallback((requesterId: string, accepted: boolean) => {
+    socket.emit('screenShareResponse', { roomId, requesterId, accepted });
+    setScreenShareRequest(null);
+  }, [roomId]);
+
 
   return {
     messages,
@@ -288,5 +329,10 @@ export function useRoomSocket(
     kickUser,
     banUser,
     updateUsername,
+    requestScreenShare,
+    respondToScreenShare,
+    screenShareRequest,
+    screenSharePermissionGranted,
+    resetScreenSharePermission: () => setScreenSharePermissionGranted(false),
   };
 }

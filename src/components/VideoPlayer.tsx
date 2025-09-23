@@ -1,11 +1,11 @@
-// components/VideoPlayer.tsx
-
 'use client';
 
 import { memo, forwardRef, useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { PlayerState } from '@/hooks/useRoomSocket';
+// ✨ REMOVED: Unused icon imports
+// import { ArrowsPointingOutIcon, ArrowsPointingInIcon } from '@heroicons/react/24/solid';
 
 // The ref allows parent components to access the ReactPlayer instance
 export interface PlayerRef {
@@ -14,8 +14,12 @@ export interface PlayerRef {
   getInternalPlayer(): any;
 }
 
+// Updated props to accept a stream and sharing controls
 interface VideoPlayerProps {
   url?: string;
+  stream?: MediaStream | null;
+  isSharing?: boolean;
+  onStopSharing?: () => void;
   isController: boolean;
   onVideoEnded: () => void;
   isAgeRestricted?: boolean;
@@ -27,13 +31,22 @@ interface VideoPlayerProps {
 const Player = dynamic(() => import('react-player'), { ssr: false });
 
 const VideoPlayer = forwardRef<PlayerRef, VideoPlayerProps>(
-  ({ url, isController, onVideoEnded, isAgeRestricted, playerState, onStateChange }, ref) => {
+  ({ url, stream, isSharing, onStopSharing, isController, onVideoEnded, isAgeRestricted, playerState, onStateChange }, ref) => {
     const [isPlaying, setIsPlaying] = useState(false);
-    const [isFullscreen, setIsFullscreen] = useState(false);
     const [isWaitingForHost, setIsWaitingForHost] = useState(false);
     const playerWrapperRef = useRef<HTMLDivElement>(null);
+    const videoRef = useRef<HTMLVideoElement>(null);
     const lastPauseRef = useRef<number>(0);
     const debounceRef = useRef<NodeJS.Timeout | null>(null);
+    
+    // ✨ REMOVED: The state and effect for tracking fullscreen state are no longer needed.
+
+    // This effect handles attaching the incoming stream to the video element
+    useEffect(() => {
+      if (videoRef.current && stream) {
+        videoRef.current.srcObject = stream;
+      }
+    }, [stream]);
 
     useEffect(() => {
       if (!isController && playerState) {
@@ -50,12 +63,6 @@ const VideoPlayer = forwardRef<PlayerRef, VideoPlayerProps>(
     }, [playerState, isController, ref]);
 
     useEffect(() => {
-      const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
-      document.addEventListener('fullscreenchange', handleFullscreenChange);
-      return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-    }, []);
-
-    useEffect(() => {
       if (url) setIsWaitingForHost(false);
     }, [url]);
 
@@ -69,6 +76,39 @@ const VideoPlayer = forwardRef<PlayerRef, VideoPlayerProps>(
       onStateChange({ time: timeValue, status });
       debounceRef.current = setTimeout(() => { debounceRef.current = null; }, 500);
     };
+    
+    // ✨ REMOVED: The handleToggleFullscreen function is no longer needed.
+
+    // If a stream is active, render the native video player for it
+    if (stream) {
+      return (
+        <div ref={playerWrapperRef} className="relative w-full h-full bg-black group">
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            controls
+            className="w-full h-full object-contain"
+          />
+
+          {/* ✨ REMOVED: The custom fullscreen button JSX has been deleted. */}
+
+          {isSharing && (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
+              <button
+                onClick={onStopSharing}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition"
+              >
+                Stop Sharing
+              </button>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // --- Fallback to ReactPlayer for URLs if no stream is present ---
 
     if (!url) {
       return (
@@ -79,7 +119,6 @@ const VideoPlayer = forwardRef<PlayerRef, VideoPlayerProps>(
     }
 
     if (isAgeRestricted) {
-      // ✨ Check if the URL is from Twitch for the link text
       const isTwitch = url.includes('twitch.tv');
       return (
         <div className="w-full h-full flex flex-col items-center justify-center bg-black text-white p-4">
@@ -91,7 +130,6 @@ const VideoPlayer = forwardRef<PlayerRef, VideoPlayerProps>(
             rel="noopener noreferrer"
             className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
           >
-            {/* ✨ Dynamically set the button text */}
             Watch on {isTwitch ? 'Twitch' : 'YouTube'}
           </Link>
         </div>

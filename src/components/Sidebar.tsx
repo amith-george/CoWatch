@@ -1,3 +1,5 @@
+// src/components/Sidebar.tsx
+
 'use client';
 
 import Image from 'next/image';
@@ -15,17 +17,18 @@ const ICON_BOX_CLASSES =
 // Define props for the component
 interface SidebarProps {
   username: string | null;
-  onProfileClick: () => void; // Handler for profile clicks
+  onProfileClick: () => void;
+  onScreenShareClick: () => void;
 }
 
-export default function Sidebar({ username, onProfileClick }: SidebarProps) {
+export default function Sidebar({ username, onProfileClick, onScreenShareClick }: SidebarProps) {
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
 
   const sidebarItems = [
     {
       label: 'Screen',
       icon: ComputerDesktopIcon,
-      onClick: () => {},
+      onClick: onScreenShareClick,
     },
     {
       label: 'Help',

@@ -9,6 +9,7 @@ export type MemberRole = 'Host' | 'Moderator' | 'Participant';
 
 export interface Member extends RoomUser {
   role: MemberRole;
+  socketId: string;
 }
 
 // Chat message type used in sockets and UI
