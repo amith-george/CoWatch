@@ -1,45 +1,47 @@
-# 🎬 CoWatch
+# 🎬 CoWatch - Frontend
 
-A simple and modern web app for watching YouTube and Twitch streams with friends, perfectly synchronized in real-time.
+A modern, responsive, real-time platform to watch YouTube videos or Twitch streams together with friends. Built with **Next.js** and **Tailwind CSS**, optimized for both desktop and mobile usage.
 
-**[Link to Live Demo]** ---
-
-## 📌 What is CoWatch?
-
-CoWatch is a synchronized media viewing platform designed for instant, hassle-free watch parties. There's **no need to sign up or log in**. Just create a temporary room, share the link, and enjoy perfectly synced YouTube or Twitch playback with real-time text chat and screen sharing. It's the easiest way to share a moment, whether you're watching a movie, a live event, or collaborating on a project.
+Live Site: https://cowatch.vercel.app/ (to be updated after deployment)
 
 ---
 
-## ✨ Why Use CoWatch?
+## 📌 Description
 
--   🎉 **Effortless Watch Parties:** Host movie nights or watch live streams with friends, with playback that's perfectly in sync for everyone.
--   🤝 **Quick Collaboration:** Instantly share your screen to review work, give a quick demo, or browse together.
--   🚀 **No Hassle, No Sign-ups:** Get started in seconds. Create a room, share the link, and you're ready to go. No accounts or personal information required.
--   🔒 **Privacy-Focused:** All rooms are temporary and automatically deleted after a duration you set, ensuring your viewing history and chats remain private.
+**CoWatch** is the frontend client of a synchronized media viewing and collaboration platform. It provides an intuitive UI for creating and joining temporary virtual rooms where participants can:
 
----
+- 🎥 Watch YouTube or Twitch content together in perfect sync  
+- 💬 Chat in real time  
+- 🖥️ Share screens via WebRTC  
 
-## 📖 How to Use It
-
-1.  **Visit the site** and click "Create Room".
-2.  **Paste** a YouTube video or Twitch stream URL.
-3.  **Set a duration** for how long your room should last.
-4.  **Share the unique room link** with your friends.
-5.  **Enjoy!** Chat, watch, and share your screen together.
+The app ensures smooth user experience across devices with a clean design and minimal setup—no registration required.
 
 ---
 
-## 🛠️ Technologies Used
+## 🚀 Key Features
 
--   **Framework:** Next.js & React
--   **Styling:** Tailwind CSS
--   **Real-Time Communication:** Socket.IO Client
--   **Screen Sharing:** WebRTC
--   **Animations:** Framer Motion
+- 🔗 **Room creation** with custom session duration and sharable links  
+- 🎥 **Synchronized media playback** (YouTube + Twitch)  
+- 💬 **Lightweight chat** within each room  
+- 🖥️ **Screen sharing** (tab, app, or full screen)  
+- 📱 **Responsive design** for desktop & mobile  
+- 🔐 **Role-based permissions** (host, moderator, viewer)  
+
+---
+
+## ⚙️ Technologies Used
+
+- **Next.js** – React-based frontend framework  
+- **Tailwind CSS** – Utility-first styling  
+- **Socket.IO Client** – Real-time communication  
+- **WebRTC** – Screen sharing  
+- **Vercel** – Deployment and hosting  
 
 ---
 
 ## 📫 Contact
 
-**[Your Name]** Email: [your.email@example.com]  
-🌐 [LinkedIn](https://www.linkedin.com/in/your-profile/)
+**Amith George**  
+Email: amithgeorge130@gmail.com  
+🌐 [LinkedIn](https://www.linkedin.com/in/amith-george/)  
+💻 [GitHub](https://github.com/amith-george)  
