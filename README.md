@@ -1,47 +1,34 @@
-# 🎬 CoWatch - Frontend
+# 🎬 CoWatch
 
-A modern, responsive, real-time platform to watch YouTube videos or Twitch streams together with friends. Built with **Next.js** and **Tailwind CSS**, optimized for both desktop and mobile usage.
+CoWatch is a full-stack web application that enables users to watch YouTube and Twitch streams together in synchronized virtual rooms. With integrated real-time chat and WebRTC screen sharing, it's the perfect platform for watch parties, casual meetups, or quick collaborations—no registration required.
 
-Live Site: https://cowatch.vercel.app/ (to be updated after deployment)
-
----
-
-## 📌 Description
-
-**CoWatch** is the frontend client of a synchronized media viewing and collaboration platform. It provides an intuitive UI for creating and joining temporary virtual rooms where participants can:
-
-- 🎥 Watch YouTube or Twitch content together in perfect sync  
-- 💬 Chat in real time  
-- 🖥️ Share screens via WebRTC  
-
-The app ensures smooth user experience across devices with a clean design and minimal setup—no registration required.
+Live Site: https://your-cowatch-project.vercel.app/
 
 ---
 
-## 🚀 Key Features
+### ## 🌟 Key Features
 
-- 🔗 **Room creation** with custom session duration and sharable links  
-- 🎥 **Synchronized media playback** (YouTube + Twitch)  
-- 💬 **Lightweight chat** within each room  
-- 🖥️ **Screen sharing** (tab, app, or full screen)  
-- 📱 **Responsive design** for desktop & mobile  
-- 🔐 **Role-based permissions** (host, moderator, viewer)  
-
----
-
-## ⚙️ Technologies Used
-
-- **Next.js** – React-based frontend framework  
-- **Tailwind CSS** – Utility-first styling  
-- **Socket.IO Client** – Real-time communication  
-- **WebRTC** – Screen sharing  
-- **Vercel** – Deployment and hosting  
+* **Synchronized Playback:** Watch YouTube videos and Twitch streams with friends, with playback controlled by the host for a seamless shared experience.
+* **Real-Time Chat:** Every room includes a lightweight, real-time chat for instant communication.
+* **High-Quality Screen Sharing:** Share a browser tab, an application, or your entire screen with the room using WebRTC for low-latency streaming.
+* **No Accounts Needed:** Jump right in. Create a room by pasting a URL, set a duration, and invite friends with a simple link.
+* **Full Room Control:** The host can manage the video queue, assign moderators, and moderate the room with kick/ban tools.
+* **Ephemeral & Private:** Rooms and their chat histories are automatically deleted after the session expires, ensuring your privacy.
 
 ---
 
-## 📫 Contact
+### ## 🛠️ Tech Stack
 
-**Amith George**  
-Email: amithgeorge130@gmail.com  
-🌐 [LinkedIn](https://www.linkedin.com/in/amith-george/)  
-💻 [GitHub](https://github.com/amith-george)  
+This project is a monorepo containing two main parts: a Next.js frontend and a Node.js backend.
+
+| Area                  | Technology                                     |
+| --------------------- | ---------------------------------------------- |
+| **Frontend**          | Next.js (React), Tailwind CSS, Framer Motion   |
+| **Backend**           | Node.js, Express.js                            |
+| **Real-Time Engine**  | Socket.IO, WebRTC (for screen sharing)         |
+| **Database**          | MongoDB (with Mongoose)                        |
+| **Third-Party APIs**  | YouTube Data API v3, Twitch API                |
+| **Deployment**        | Vercel (Frontend), Render (Backend)            |
+
+---
+
