@@ -1,48 +1,44 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 
 export function useCountdown(expiry?: string, onExpire?: () => void) {
-  // We'll use a ref to store the interval ID to ensure we always have the latest one.
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  
-  // Helper function to calculate time left
-  const calculateTimeLeft = () => {
+
+  // FIX: Wrapped the helper function in useCallback.
+  // This memoizes the function, so it only gets recreated when 'expiry' changes.
+  const calculateTimeLeft = useCallback(() => {
     if (!expiry) return 0;
     const difference = +new Date(expiry) - +new Date();
     return difference > 0 ? Math.floor(difference / 1000) : 0;
-  };
+  }, [expiry]);
 
   const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
 
   useEffect(() => {
-    // Clear any existing interval when the expiry date changes
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
 
-    // Set the initial time left immediately
     setTimeLeft(calculateTimeLeft());
 
-    // Set up the self-correcting interval
     intervalRef.current = setInterval(() => {
       const newTimeLeft = calculateTimeLeft();
       setTimeLeft(newTimeLeft);
 
-      // Check for expiration
       if (newTimeLeft <= 0) {
         if (intervalRef.current) {
           clearInterval(intervalRef.current);
         }
-        onExpire?.(); // Call the expiration callback
+        onExpire?.();
       }
     }, 1000);
 
-    // Cleanup function to clear the interval when the component unmounts
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
     };
-  }, [expiry, onExpire]); // Rerun the effect if the expiry date or callback changes
+    // FIX: Added the 'calculateTimeLeft' function to the dependency array.
+  }, [expiry, onExpire, calculateTimeLeft]);
 
   return timeLeft;
 }

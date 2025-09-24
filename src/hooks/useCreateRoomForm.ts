@@ -1,5 +1,3 @@
-// hooks/useCreateRoomForm.ts
-
 'use client';
 
 import { useState } from 'react';
@@ -45,7 +43,7 @@ export function useCreateRoomForm() {
     // --- API Call ---
     setIsLoading(true);
     try {
-      let userId = localStorage.getItem('userId') || `user_${Date.now()}`;
+      const userId = localStorage.getItem('userId') || `user_${Date.now()}`;
       localStorage.setItem('userId', userId);
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API}/rooms/create`, {
@@ -57,7 +55,7 @@ export function useCreateRoomForm() {
       const data = await response.json();
 
       if (response.ok) {
-        router.push(`/room/${data.room.roomId}`); // Use Next.js router for client-side navigation
+        router.push(`/room/${data.room.roomId}`); 
       } else {
         setServerError(data.message || 'Failed to create room.');
         setIsLoading(false);

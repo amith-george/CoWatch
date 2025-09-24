@@ -4,7 +4,6 @@
 
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-// ✨ 1. Import ToastContainer
 import { toast, ToastContainer } from 'react-toastify';
 
 // Custom Hooks
@@ -62,7 +61,6 @@ export default function RoomClient({ roomId }: { roomId: string }) {
   const router = useRouter();
   const [username, setUsername] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'chat' | 'playlists' | 'history' | 'members'>('chat');
-  const [nextVideoMessage, setNextVideoMessage] = useState<string | null>(null);
   const [videoHasEnded, setVideoHasEnded] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'shuffle'>('list');
   const [showUpdateNameModal, setShowUpdateNameModal] = useState(false);
@@ -77,17 +75,21 @@ export default function RoomClient({ roomId }: { roomId: string }) {
   const initialPlaylist = useMemo(() => roomData?.queue || [], [roomData]);
 
   const getPlayerState = useCallback((): PlayerState | null => {
-    if (playerRef.current && typeof playerRef.current.getInternalPlayer === 'function') {
-      const internalPlayer = playerRef.current.getInternalPlayer();
-      if (internalPlayer && typeof internalPlayer.getPlayerState === 'function') {
-        return {
-          time: playerRef.current.getCurrentTime(),
-          status: internalPlayer.getPlayerState(),
-        };
-      }
-    }
+    if (playerRef.current) {
+      const internalPlayer = playerRef.current.getInternalPlayer() as {
+        getPlayerState?: () => number;
+      };
+
+    if (internalPlayer?.getPlayerState) {
+      const rawState = internalPlayer.getPlayerState();
+      return {
+        time: playerRef.current.getCurrentTime(),
+        status: rawState as PlayerState['status'],
+      };
+    }}
     return null;
   }, []);
+
 
   const {
     messages,
@@ -147,7 +149,6 @@ export default function RoomClient({ roomId }: { roomId: string }) {
 
       toast(<RequestToast request={screenShareRequest} onAccept={handleAccept} onDecline={handleDecline} />, {
         toastId: `ssr-${screenShareRequest.requesterId}`,
-        // This specific toast will not auto-close, overriding the global default
         autoClose: false,
       });
     }
@@ -168,11 +169,9 @@ export default function RoomClient({ roomId }: { roomId: string }) {
   useEffect(() => {
     let timerId: NodeJS.Timeout | undefined;
     if (videoHasEnded && playlist.length > 0) {
-      setNextVideoMessage('Playing next video in 10 seconds...');
       timerId = setTimeout(() => {
         playNextVideo();
         setVideoHasEnded(false);
-        setNextVideoMessage(null);
       }, 10000);
     }
     return () => {
@@ -237,10 +236,15 @@ export default function RoomClient({ roomId }: { roomId: string }) {
 
   const handleScreenShareClick = () => {
     if (isHost || isSharing) {
-      isSharing ? stopSharing() : startSharing();
+      // FIX: Replaced the ternary operator with an if/else statement
+      // to resolve the 'no-unused-expressions' warning.
+      if (isSharing) {
+        stopSharing();
+      } else {
+        startSharing();
+      }
     } else {
       requestScreenShare();
-      // ✨ 3. The autoClose option is no longer needed here
       toast.info('Screen share request sent to the host.');
     }
   };
@@ -262,10 +266,9 @@ export default function RoomClient({ roomId }: { roomId: string }) {
 
   return (
     <div className="flex bg-[#1f1f1f] min-h-screen text-white">
-      {/* ✨ 2. Add the ToastContainer to set a global default */}
       <ToastContainer
         position="bottom-right"
-        autoClose={10000} // 10 seconds
+        autoClose={10000}
         hideProgressBar={false}
         newestOnTop={false}
         closeOnClick
@@ -309,7 +312,6 @@ export default function RoomClient({ roomId }: { roomId: string }) {
                 onSelectVideo={handleSelectVideo}
                 onAddToPlaylist={addToPlaylist}
                 searchQuery={searchQuery}
-                searchPlatform={searchPlatform}
               />
             </div>
           </div>
@@ -340,7 +342,6 @@ export default function RoomClient({ roomId }: { roomId: string }) {
           </div>
         </div>
         
-        {/* Modal rendering logic */}
         {(needsToJoin || showInvite || showUpdateNameModal) && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-50">
             {needsToJoin && (

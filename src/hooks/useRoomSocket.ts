@@ -1,5 +1,3 @@
-// src/hooks/useRoomSocket.ts
-
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
@@ -10,8 +8,7 @@ import { toast } from 'react-toastify';
 // Define a type for the player's state object for type safety
 export interface PlayerState {
   time: number;
-  // Common player states: 1=playing, 2=paused, 3=buffering, 0=ended
-  status: 1 | 2 | 3 | 0;
+  status: 0 | 1 | 2 | 3 | -1 | 5;
 }
 
 // Define a type for the complete initial state payload
@@ -23,6 +20,13 @@ export interface InitialState extends PlayerState {
 export interface ScreenShareRequest {
   requesterId: string;
   requesterUsername: string;
+}
+
+// FIX: Added a specific type for messages fetched from the backend API.
+interface StoredMessage {
+  text: string;
+  username: string;
+  role: string;
 }
 
 export function useRoomSocket(
@@ -42,7 +46,6 @@ export function useRoomSocket(
   const [playlist, setPlaylist] = useState<string[]>(initialPlaylist);
   const [playerState, setPlayerState] = useState<PlayerState | null>(null);
   const [screenShareRequest, setScreenShareRequest] = useState<ScreenShareRequest | null>(null);
-  // ✨ 1. Add new state to track screen share permission
   const [screenSharePermissionGranted, setScreenSharePermissionGranted] = useState(false);
   const hasJoined = useRef(false);
 
@@ -61,8 +64,9 @@ export function useRoomSocket(
         const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API}/messages/${roomId}`);
         if (!res.ok) throw new Error('Failed to fetch messages');
         const data = await res.json();
-
-        const storedMessages: ChatMessage[] = data.messages.map((msg: any) => ({
+        
+        // FIX: Replaced 'any' with the specific 'StoredMessage' type.
+        const storedMessages: ChatMessage[] = data.messages.map((msg: StoredMessage) => ({
           type: 'user',
           text: msg.text,
           username: msg.username,
@@ -156,8 +160,7 @@ export function useRoomSocket(
       console.log('Received screen share request:', data);
       setScreenShareRequest(data);
     };
-
-    // ✨ 2. Add listener to handle the host's response
+    
     const handleScreenSharePermission = ({ granted }: { granted: boolean }) => {
       if (granted) {
         setScreenSharePermissionGranted(true);

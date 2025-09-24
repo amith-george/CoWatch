@@ -77,7 +77,8 @@ export default function NameBox({
     setIsLoading(true);
 
     if (mode === 'join') {
-      let userId = localStorage.getItem('userId');
+      // FIX: Changed 'let' to 'const' as userId is never reassigned.
+      const userId = localStorage.getItem('userId');
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API}/rooms/${roomId}/join`, {
           method: 'POST',

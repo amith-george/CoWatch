@@ -1,20 +1,34 @@
+// src/components/VideoPlayer.tsx
+
 'use client';
 
-import { memo, forwardRef, useEffect, useState, useRef } from 'react';
+import {
+  memo,
+  forwardRef,
+  useEffect,
+  useState,
+  useRef,
+  ComponentProps,
+  ElementRef,
+} from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { PlayerState } from '@/hooks/useRoomSocket';
-// ✨ REMOVED: Unused icon imports
-// import { ArrowsPointingOutIcon, ArrowsPointingInIcon } from '@heroicons/react/24/solid';
+
+// --- Types for react-player ---
+type ReactPlayerModule = typeof import('react-player');
+type ReactPlayerComponent = ReactPlayerModule['default'];
+type ReactPlayerInstance = ElementRef<ReactPlayerComponent>;
+type ReactPlayerProps = ComponentProps<ReactPlayerComponent>;
 
 // The ref allows parent components to access the ReactPlayer instance
 export interface PlayerRef {
   seekTo(amount: number, type?: 'seconds' | 'fraction'): void;
   getCurrentTime(): number;
-  getInternalPlayer(): any;
+  getInternalPlayer(): unknown;
 }
 
-// Updated props to accept a stream and sharing controls
+// Props for VideoPlayer
 interface VideoPlayerProps {
   url?: string;
   stream?: MediaStream | null;
@@ -27,27 +41,41 @@ interface VideoPlayerProps {
   onStateChange: (state: PlayerState) => void;
 }
 
-// Dynamically import ReactPlayer to avoid issues with server-side rendering
-const Player = dynamic(() => import('react-player'), { ssr: false });
+// Dynamically import ReactPlayer to avoid SSR issues
+const Player = dynamic(() => import('react-player'), { ssr: false }) as unknown as React.ComponentType<
+  ReactPlayerProps & { ref?: React.Ref<ReactPlayerInstance> }
+>;
 
 const VideoPlayer = forwardRef<PlayerRef, VideoPlayerProps>(
-  ({ url, stream, isSharing, onStopSharing, isController, onVideoEnded, isAgeRestricted, playerState, onStateChange }, ref) => {
+  (
+    {
+      url,
+      stream,
+      isSharing,
+      onStopSharing,
+      isController,
+      onVideoEnded,
+      isAgeRestricted,
+      playerState,
+      onStateChange,
+    },
+    ref
+  ) => {
     const [isPlaying, setIsPlaying] = useState(false);
     const [isWaitingForHost, setIsWaitingForHost] = useState(false);
     const playerWrapperRef = useRef<HTMLDivElement>(null);
     const videoRef = useRef<HTMLVideoElement>(null);
     const lastPauseRef = useRef<number>(0);
     const debounceRef = useRef<NodeJS.Timeout | null>(null);
-    
-    // ✨ REMOVED: The state and effect for tracking fullscreen state are no longer needed.
 
-    // This effect handles attaching the incoming stream to the video element
+    // Attach incoming stream to <video> element
     useEffect(() => {
       if (videoRef.current && stream) {
         videoRef.current.srcObject = stream;
       }
     }, [stream]);
 
+    // Sync playback when not controller
     useEffect(() => {
       if (!isController && playerState) {
         setIsPlaying(playerState.status === 1);
@@ -66,7 +94,8 @@ const VideoPlayer = forwardRef<PlayerRef, VideoPlayerProps>(
       if (url) setIsWaitingForHost(false);
     }, [url]);
 
-    const emitStateUpdate = (status: 1 | 2, source: string) => {
+    // FIX: Removed the unused 'source' parameter from the function definition.
+    const emitStateUpdate = (status: 1 | 2) => {
       if (!isController) return;
       const now = Date.now();
       if (debounceRef.current) return;
@@ -74,12 +103,12 @@ const VideoPlayer = forwardRef<PlayerRef, VideoPlayerProps>(
       const player = (ref as React.RefObject<PlayerRef>)?.current;
       const timeValue = player?.getCurrentTime?.() ?? 0;
       onStateChange({ time: timeValue, status });
-      debounceRef.current = setTimeout(() => { debounceRef.current = null; }, 500);
+      debounceRef.current = setTimeout(() => {
+        debounceRef.current = null;
+      }, 500);
     };
-    
-    // ✨ REMOVED: The handleToggleFullscreen function is no longer needed.
 
-    // If a stream is active, render the native video player for it
+    // If a stream is active, render the native video player
     if (stream) {
       return (
         <div ref={playerWrapperRef} className="relative w-full h-full bg-black group">
@@ -91,9 +120,6 @@ const VideoPlayer = forwardRef<PlayerRef, VideoPlayerProps>(
             controls
             className="w-full h-full object-contain"
           />
-
-          {/* ✨ REMOVED: The custom fullscreen button JSX has been deleted. */}
-
           {isSharing && (
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
               <button
@@ -108,8 +134,7 @@ const VideoPlayer = forwardRef<PlayerRef, VideoPlayerProps>(
       );
     }
 
-    // --- Fallback to ReactPlayer for URLs if no stream is present ---
-
+    // If no URL
     if (!url) {
       return (
         <div className="w-full h-full flex items-center justify-center bg-black text-gray-400">
@@ -118,6 +143,7 @@ const VideoPlayer = forwardRef<PlayerRef, VideoPlayerProps>(
       );
     }
 
+    // Age restriction
     if (isAgeRestricted) {
       const isTwitch = url.includes('twitch.tv');
       return (
@@ -136,25 +162,28 @@ const VideoPlayer = forwardRef<PlayerRef, VideoPlayerProps>(
       );
     }
 
+    // ReactPlayer fallback
     return (
       <div ref={playerWrapperRef} className="relative w-full h-full bg-black overflow-hidden">
         <Player
-          ref={ref as any}
+          ref={ref as React.Ref<ReactPlayerInstance>}
           key={url}
           src={url}
           width="100%"
           height="100%"
           playing={isPlaying}
-          controls={true}
+          controls
           onPlay={() => {
             setIsPlaying(true);
-            if (isController) emitStateUpdate(1, 'onPlay');
+            // FIX: Removed the unused 'source' argument from the function call.
+            if (isController) emitStateUpdate(1);
           }}
           onPause={() => {
             setIsPlaying(false);
             if (isController) {
               lastPauseRef.current = Date.now();
-              emitStateUpdate(2, 'onPause');
+              // FIX: Removed the unused 'source' argument from the function call.
+              emitStateUpdate(2);
             }
           }}
           onEnded={() => {
@@ -166,14 +195,14 @@ const VideoPlayer = forwardRef<PlayerRef, VideoPlayerProps>(
           }}
           onReady={() => {
             if (!isController && playerState) {
-                setIsPlaying(playerState.status === 1);
-                const player = (ref as React.RefObject<PlayerRef>)?.current;
-                if (player && typeof player.getCurrentTime === 'function' && playerState.time !== undefined) {
-                    const currentTime = player.getCurrentTime() || 0;
-                    if (Math.abs(currentTime - playerState.time) > 2) {
-                        player.seekTo(playerState.time, 'seconds');
-                    }
+              setIsPlaying(playerState.status === 1);
+              const player = (ref as React.RefObject<PlayerRef>)?.current;
+              if (player && typeof player.getCurrentTime === 'function' && playerState.time !== undefined) {
+                const currentTime = player.getCurrentTime() || 0;
+                if (Math.abs(currentTime - playerState.time) > 2) {
+                  player.seekTo(playerState.time, 'seconds');
                 }
+              }
             }
           }}
           style={{ position: 'absolute', top: 0, left: 0 }}

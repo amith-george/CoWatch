@@ -1,10 +1,12 @@
+// src/components/SearchTab.tsx
+
 'use client';
 
 import Image from 'next/image';
 import { PlayIcon, PlusIcon, FireIcon, MagnifyingGlassIcon } from '@heroicons/react/24/solid';
 import { VideoItem } from '@/types/room';
-import type { SearchPlatform } from './RoomClient';
 
+// FIX: Removed 'searchPlatform' from the props interface
 interface SearchTabProps {
   results: VideoItem[];
   isLoading: boolean;
@@ -12,16 +14,14 @@ interface SearchTabProps {
   onSelectVideo: (videoUrl: string) => void;
   onAddToPlaylist: (videoUrl: string) => void;
   searchQuery?: string;
-  searchPlatform: SearchPlatform;
 }
 
 const VideoCard = ({ video, onSelectVideo, onAddToPlaylist, isPriority }: { video: VideoItem; onSelectVideo: (url: string) => void; onAddToPlaylist: (url: string) => void; isPriority: boolean; }) => {
   const handlePlay = (e: React.MouseEvent) => { e.stopPropagation(); onSelectVideo(video.videoUrl); };
   const handleAdd = (e: React.MouseEvent) => { e.stopPropagation(); onAddToPlaylist(video.videoUrl); };
 
-  // Truncate title to 70 characters at the last word boundary
   const maxTitleLength = 90;
-  const truncatedTitle = video.title.length > maxTitleLength 
+  const truncatedTitle = video.title.length > maxTitleLength
     ? video.title.slice(0, video.title.lastIndexOf(' ', maxTitleLength)) + '...'
     : video.title;
 
@@ -53,7 +53,8 @@ const VideoCardSkeleton = () => (
   </div>
 );
 
-export default function SearchTab({ results, isLoading, isPopular, onSelectVideo, onAddToPlaylist, searchQuery, searchPlatform }: SearchTabProps) {
+// FIX: Removed 'searchPlatform' from the destructured props
+export default function SearchTab({ results, isLoading, isPopular, onSelectVideo, onAddToPlaylist, searchQuery }: SearchTabProps) {
   if (isLoading) {
     return (
       <div className="w-full h-full bg-transparent p-4 flex flex-col">
@@ -72,19 +73,12 @@ export default function SearchTab({ results, isLoading, isPopular, onSelectVideo
     return (
       <div className="w-full h-full bg-transparent p-4 flex flex-col items-center justify-center">
         <MagnifyingGlassIcon className="w-12 h-12 text-gray-500 mb-2" />
-        <p className="text-gray-400 text-center">No results found for "{searchQuery}".</p>
+        <p className="text-gray-400 text-center">No results found for &ldquo;{searchQuery}&rdquo;.</p>
       </div>
     );
   }
 
-  const getHeaderText = () => {
-    if (isPopular) {
-      return `Popular on YouTube`;
-    }
-    return searchQuery ? `Results for "${searchQuery}"` : "Search Results";
-  };
-  
-  const headerText = getHeaderText();
+  const headerText = isPopular ? 'Popular on YouTube' : searchQuery ? `Results for "${searchQuery}"` : 'Search Results';
 
   return (
     <div className="w-full h-full bg-transparent p-4 flex flex-col">
@@ -94,7 +88,15 @@ export default function SearchTab({ results, isLoading, isPopular, onSelectVideo
         ) : (
           <MagnifyingGlassIcon className="w-6 h-6 text-blue-400 flex-shrink-0" />
         )}
-        <h3 className="truncate" title={headerText}>{headerText}</h3>
+        <h3 className="truncate" title={headerText}>
+          {isPopular ? (
+            'Popular on YouTube'
+          ) : searchQuery ? (
+            <>Results for &ldquo;{searchQuery}&rdquo;</>
+          ) : (
+            'Search Results'
+          )}
+        </h3>
         {!isPopular && results.length > 0 && (
           <span className="text-sm font-normal text-gray-400 ml-2 flex-shrink-0">
             ({results.length} result{results.length !== 1 ? 's' : ''})
@@ -103,9 +105,9 @@ export default function SearchTab({ results, isLoading, isPopular, onSelectVideo
       </div>
       <div className="search-results-container space-y-3 overflow-y-auto flex-grow pr-2 max-w-full">
         {results.map((video, index) => (
-          <VideoCard 
+          <VideoCard
             key={video.videoUrl}
-            video={video} 
+            video={video}
             onSelectVideo={onSelectVideo}
             onAddToPlaylist={onAddToPlaylist}
             isPriority={index < 2}
