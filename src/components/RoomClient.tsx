@@ -4,9 +4,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
-import { useRoom } from '@/contexts/RoomContext'; // ✨ 1. Import the new useRoom hook
+import { useRoom } from '@/contexts/RoomContext';
 
-// Custom Hooks (only those for local UI state remain)
+// Custom Hooks
 import { useSearch } from '@/hooks/useSearch';
 import { useScrollLock } from '@/hooks/useScrollLock';
 import { useInvitePrompt } from '@/hooks/useInvitePrompt';
@@ -20,11 +20,7 @@ import VideoPlayer from '@/components/VideoPlayer';
 import RoomHeader from '@/components/RoomHeader';
 import SearchTab from '@/components/SearchTab';
 
-// Note: RequestToast component and types can be removed if they are fully handled in the context
-// For now, we'll assume they might still be used here for other potential toasts.
-
 export default function RoomClient() {
-  // ✨ 2. Get ALL room data and functions from the context. No more props!
   const {
     loading,
     roomData,
@@ -33,6 +29,7 @@ export default function RoomClient() {
     username,
     setUsername,
     members,
+    currentUserId, // Get the currentUserId to check for re-joining
     playerRef,
     currentVideoUrl,
     currentVideoMetadata,
@@ -53,8 +50,6 @@ export default function RoomClient() {
     updateUsername,
   } = useRoom();
 
-  // ✨ 3. All the complex hooks (useRoomData, useRoomSocket, etc.) are GONE from this file.
-  //    Only local UI state remains.
   const [showUpdateNameModal, setShowUpdateNameModal] = useState(false);
   const [searchPlatform, setSearchPlatform] = useState<'youtube' | 'twitch'>('youtube');
   const [videoHasEnded, setVideoHasEnded] = useState(false);
@@ -62,6 +57,27 @@ export default function RoomClient() {
   const { isInviteVisible, closeInvitePrompt } = useInvitePrompt(roomId);
   const { results: searchResults, isLoading: isSearchLoading, isPopular, searchQuery, search: searchVideos } = useSearch(searchPlatform);
   useScrollLock();
+
+  // ✨ FIX 1: This useEffect automatically finds and sets the username for returning users.
+  useEffect(() => {
+    // Run this check only when the room data is loaded but the username isn't set yet.
+    if (roomData && currentUserId && !username) {
+      // Combine all known users from the initial room data fetch.
+      const allUsersInRoom = [
+        roomData.host,
+        ...roomData.moderators,
+        ...roomData.participants,
+      ];
+
+      // Find if the current user (identified by userId from localStorage) is in that list.
+      const returningUser = allUsersInRoom.find(user => user?.userId === currentUserId);
+
+      // If they are found, set their username automatically, bypassing the name modal.
+      if (returningUser) {
+        setUsername(returningUser.username);
+      }
+    }
+  }, [roomData, currentUserId, username, setUsername]);
 
   const handleVideoEnded = useCallback(() => {
     if (isController) setVideoHasEnded(true);
@@ -119,7 +135,8 @@ export default function RoomClient() {
     );
   }
 
-  const needsToJoin = !username && !members.find(m => m.userId === roomData.host.userId);
+  // ✨ FIX 2: The logic to show the NameBox is now much simpler.
+  const needsToJoin = !username;
   const showInvite = isController && isInviteVisible;
 
   return (

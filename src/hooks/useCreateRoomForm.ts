@@ -13,7 +13,7 @@ export function useCreateRoomForm() {
   const router = useRouter();
   const [name, setName] = useState('');
   const [roomName, setRoomName] = useState('');
-  const [duration, setDuration] = useState(20); // default in minutes
+  const [duration, setDuration] = useState(60); // default in minutes
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [serverError, setServerError] = useState('');
