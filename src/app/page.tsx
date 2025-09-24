@@ -75,9 +75,14 @@ export default function Home() {
               <span className="text-yellow-400" style={{textShadow: '0 0 8px #FBBF24'}}>Watch</span>
             </h1>
           </div>
-          <button className="bg-yellow-400 text-black px-5 py-2 rounded-lg text-base font-semibold hover:bg-yellow-300 transition-colors shadow-lg hover:shadow-yellow-400/40 hidden md:block">
+          <a
+            href="https://github.com/amith-george/CoWatch"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-yellow-400 text-black px-5 py-2 rounded-lg text-base font-semibold hover:bg-yellow-300 transition-colors shadow-lg hover:shadow-yellow-400/40 hidden md:block"
+          >
             Support Us!
-          </button>
+          </a>
         </header>
 
         {/* Hero Section is now the imported Client Component */}
