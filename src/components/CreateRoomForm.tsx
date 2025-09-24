@@ -61,7 +61,6 @@ export default function CreateRoomForm() {
               onChange={(e) => setDuration(Number(e.target.value))}
               className="duration-select w-full px-3 py-3 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 transition-all"
             >
-              <option value={20}>20 Minutes</option>
               <option value={60}>1 Hour</option>
               <option value={180}>3 Hours</option>
               <option value={360}>6 Hours</option>
