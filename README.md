@@ -6,18 +6,18 @@ Live Site: https://your-cowatch-project.vercel.app/
 
 ---
 
-### ## 🌟 Key Features
+### 🌟 Key Features
 
-* **Synchronized Playback:** Watch YouTube videos and Twitch streams with friends, with playback controlled by the host for a seamless shared experience.
-* **Real-Time Chat:** Every room includes a lightweight, real-time chat for instant communication.
-* **High-Quality Screen Sharing:** Share a browser tab, an application, or your entire screen with the room using WebRTC for low-latency streaming.
-* **No Accounts Needed:** Jump right in. Create a room by pasting a URL, set a duration, and invite friends with a simple link.
-* **Full Room Control:** The host can manage the video queue, assign moderators, and moderate the room with kick/ban tools.
-* **Ephemeral & Private:** Rooms and their chat histories are automatically deleted after the session expires, ensuring your privacy.
+* **Synchronized Playback :** Watch YouTube videos and Twitch streams with friends, with playback controlled by the host for a seamless shared experience.
+* **Real-Time Chat :** Every room includes a lightweight, real-time chat for instant communication.
+* **High-Quality Screen Sharing :** Share a browser tab, an application, or your entire screen with the room using WebRTC for low-latency streaming.
+* **No Accounts Needed :** Jump right in. Create a room by pasting a URL, set a duration, and invite friends with a simple link.
+* **Full Room Control :** The host can manage the video queue, assign moderators, and moderate the room with kick/ban tools.
+* **Ephemeral & Private :** Rooms and their chat histories are automatically deleted after the session expires, ensuring your privacy.
 
 ---
 
-### ## 🛠️ Tech Stack
+### 🛠️ Tech Stack
 
 This project is a monorepo containing two main parts: a Next.js frontend and a Node.js backend.
 
