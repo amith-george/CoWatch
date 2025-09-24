@@ -2,7 +2,7 @@
 
 CoWatch is a full-stack web application that enables users to watch YouTube and Twitch streams together in synchronized virtual rooms. With integrated real-time chat and WebRTC screen sharing, it's the perfect platform for watch parties, casual meetups, or quick collaborations—no registration required.
 
-Live Site: https://co-watch-flax.vercel.app/
+Live Site: https://co-watch-psi.vercel.app/
 
 ---
 
