@@ -3,6 +3,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link'; 
 import { useState } from 'react';
 import {
   UserIcon,
@@ -14,7 +15,6 @@ import HelperModal from './HelperModal';
 const ICON_BOX_CLASSES =
   'p-3 rounded-lg bg-[#1f1f1f] hover:bg-gray-700 transition-colors';
 
-// Define props for the component
 interface SidebarProps {
   username: string | null;
   onProfileClick: () => void;
@@ -46,16 +46,16 @@ export default function Sidebar({ username, onProfileClick, onScreenShareClick }
     <>
       {/* Desktop Sidebar */}
       <aside className="hidden sm:flex fixed top-0 left-0 h-screen w-24 bg-[#1f1f1f] text-white flex-col justify-between items-center py-6 shadow-lg">
-        <div className="flex items-center justify-center">
+        <Link href="/" aria-label="Go to homepage">
           <Image
             src="/logo.png"
-            alt="WatchTogether+ Logo"
+            alt="CoWatch Logo"
             width={64}
             height={64}
-            className="object-contain"
+            className="object-contain cursor-pointer"
             priority
           />
-        </div>
+        </Link>
 
         <div className="flex flex-col items-center space-y-10 font-sans text-sm">
           <div className="flex flex-col items-center space-y-6 mb-4">
