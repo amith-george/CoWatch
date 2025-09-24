@@ -3,8 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { fetchPopularVideos, searchVideosByQuery, fetchVideoById } from '@/services/youtube.service';
 import { searchTwitchChannels, fetchTwitchMetadata } from '@/services/twitch.service';
-import { VideoItem } from '@/types/room';
-import type { SearchPlatform } from '@/components/RoomClient';
+import { VideoItem, SearchPlatform } from '@/types/room';
 
 const getUrlType = (url: string): 'youtube' | 'twitch' | 'unknown' => {
   if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube';
@@ -24,8 +23,6 @@ export const useSearch = (platform: SearchPlatform) => {
   const [isPopular, setIsPopular] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // ✨ UPDATED: This useEffect no longer depends on the `platform`.
-  // It will only run once when the component mounts to load popular YouTube videos.
   useEffect(() => {
     const loadPopular = async () => {
       setIsLoading(true);
@@ -33,14 +30,13 @@ export const useSearch = (platform: SearchPlatform) => {
       setIsLoading(false);
     };
     loadPopular();
-  }, []); // Dependency array is now empty
+  }, []);
 
   const search = useCallback(
     async (query: string) => {
       setIsLoading(true);
       setSearchQuery(query);
 
-      // ✨ UPDATED: If the search query is cleared, always show popular YouTube videos.
       if (!query.trim()) {
         setIsPopular(true);
         setResults(await fetchPopularVideos());
@@ -51,7 +47,6 @@ export const useSearch = (platform: SearchPlatform) => {
       setIsPopular(false);
       const urlType = getUrlType(query);
 
-      // Pasted URL logic remains the same
       if (urlType === 'youtube') {
         const videoId = extractVideoId(query);
         const video = videoId ? await fetchVideoById(videoId) : null;
@@ -60,7 +55,6 @@ export const useSearch = (platform: SearchPlatform) => {
         const video = await fetchTwitchMetadata(query);
         setResults(video ? [video] : []);
       } else {
-        // Active search logic correctly uses the platform
         const searchResults =
           platform === 'youtube'
             ? await searchVideosByQuery(query)

@@ -5,7 +5,10 @@
 import { useState, useEffect } from 'react';
 import { MagnifyingGlassIcon, ClockIcon, ShareIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { Room } from '@/types/room';
-import type { SearchPlatform } from './RoomClient';
+
+// ✨ FIX 1: Define the 'SearchPlatform' type directly in this file
+// since it is no longer exported from RoomClient.tsx.
+export type SearchPlatform = 'youtube' | 'twitch';
 
 // SVG components for the logos
 const YouTubeLogo = () => (
@@ -15,7 +18,6 @@ const YouTubeLogo = () => (
   </svg>
 );
 
-// ✨ UPDATED: New, solid Twitch "Glitch" icon
 const TwitchLogo = () => (
   <svg role="img" viewBox="0 0 24 28" xmlns="http://www.w3.org/2000/svg" className="h-6 w-auto">
     <path d="M3.793 0L0 3.793V24.207H6.322V28L10.115 24.207H15.655L24 15.862V0H3.793Z" fill="#9146FF" />
@@ -87,7 +89,8 @@ export default function RoomHeader({
   };
 
   const togglePlatform = () => {
-    setSearchPlatform(prev => (prev === 'youtube' ? 'twitch' : 'youtube'));
+    // ✨ FIX 2: Add the explicit 'SearchPlatform' type to the 'prev' parameter.
+    setSearchPlatform((prev: SearchPlatform) => (prev === 'youtube' ? 'twitch' : 'youtube'));
     setSearchInput('');
   };
 
@@ -106,7 +109,6 @@ export default function RoomHeader({
 
       {/* Center: Search Bar */}
       <form onSubmit={handleSearchSubmit} className="relative w-full max-w-lg justify-self-center flex items-center gap-2">
-        {/* ✨ UPDATED: Button now has a fixed size to prevent layout shifts */}
         <button
           type="button"
           onClick={togglePlatform}

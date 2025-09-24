@@ -3,13 +3,9 @@
 'use client';
 
 import Image from 'next/image';
-import { VideoItem } from '@/types/room';
 import { ClockIcon } from '@heroicons/react/24/outline';
+import { useRoom } from '@/contexts/RoomContext'; 
 
-interface HistoryPanelProps {
-  videos?: VideoItem[];
-  isLoading?: boolean;
-}
 
 const HistoryItemSkeleton = () => (
   <div className="flex items-center gap-3 p-2 rounded-lg animate-pulse">
@@ -21,8 +17,10 @@ const HistoryItemSkeleton = () => (
   </div>
 );
 
-export default function HistoryPanel({ videos = [], isLoading = false }: HistoryPanelProps) {
-  if (isLoading) {
+export default function HistoryPanel() {
+  const { historyVideos, isHistoryLoading } = useRoom();
+
+  if (isHistoryLoading) {
     return (
       <div className="space-y-2">
         <HistoryItemSkeleton />
@@ -32,7 +30,7 @@ export default function HistoryPanel({ videos = [], isLoading = false }: History
     );
   }
 
-  if (videos.length === 0) {
+  if (historyVideos.length === 0) {
     return (
       <div className="h-full flex flex-col items-center justify-center text-center text-gray-500">
         <ClockIcon className="w-12 h-12 mb-2" />
@@ -44,7 +42,7 @@ export default function HistoryPanel({ videos = [], isLoading = false }: History
 
   return (
     <ul className="space-y-2">
-      {videos.map((video, index) => (
+      {historyVideos.map((video, index) => (
         <li
           key={`${video.videoId}-${index}`}
           className="flex items-center gap-3 p-2 rounded-lg transition-colors hover:bg-gray-800/50 cursor-pointer"
@@ -54,7 +52,7 @@ export default function HistoryPanel({ videos = [], isLoading = false }: History
               src={video.thumbnailUrl}
               alt={video.title}
               fill
-              sizes="112px" // Corresponds to Tailwind's w-28 class
+              sizes="112px"
               style={{ objectFit: 'cover' }}
               className="rounded"
             />

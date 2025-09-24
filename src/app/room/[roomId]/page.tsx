@@ -1,12 +1,23 @@
-import RoomClient from "@/components/RoomClient";
+// src/app/room/[roomId]/page.tsx
+
+import RoomClient from '@/components/RoomClient';
+import { RoomProvider } from '@/contexts/RoomContext';
+import { notFound } from 'next/navigation';
 
 export default async function RoomPage({
   params,
 }: {
   params: Promise<{ roomId: string }>;
 }) {
-  // Await params before accessing its properties
   const { roomId } = await params;
 
-  return <RoomClient roomId={roomId} />;
+  if (!roomId) {
+    notFound();
+  }
+
+  return (
+    <RoomProvider roomId={roomId}>
+      <RoomClient />
+    </RoomProvider>
+  );
 }

@@ -3,58 +3,22 @@
 'use client';
 
 import { useState } from 'react';
-import { ChatMessage, Member, VideoItem } from '@/types/room';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useRoom } from '@/contexts/RoomContext'; 
 import TabButtons from './TabButtons';
 import ChatMessagesPanel from './MessagePanel';
 import PlaylistsPanel from './PlaylistPanel';
 import HistoryPanel from './HistoryPanel';
 import MembersPanel from './MembersPanel';
 
-interface ChatTabProps {
-  viewMode: 'list' | 'shuffle';
-  setViewMode: (mode: 'list' | 'shuffle') => void;
-  activeTab: 'chat' | 'playlists' | 'history' | 'members';
-  setActiveTab: (tab: 'chat' | 'playlists' | 'history' | 'members') => void;
-  currentUserId: string;
-  messages: ChatMessage[];
-  members: Member[];
-  sendChatMessage: (msg: string) => void;
-  makeModerator: (targetUserId: string) => void;
-  removeModerator: (targetUserId: string) => void;
-  kickUser: (targetUserId: string) => void;
-  banUser: (targetUserId: string) => void;
-  historyVideos: VideoItem[];
-  isHistoryLoading: boolean;
-  playlistVideos: VideoItem[];
-  isPlaylistLoading: boolean;
-  removePlaylistItem: (videoUrl: string) => void;
-  movePlaylistItem: (videoUrl: string, direction: 'up' | 'down') => void;
-  isController: boolean; // Add this
-}
+// ✨ 2. The entire 'ChatTabProps' interface has been removed.
 
-export default function ChatTab({
-  viewMode,
-  setViewMode,
-  activeTab,
-  setActiveTab,
-  currentUserId,
-  messages,
-  members,
-  sendChatMessage,
-  makeModerator,
-  removeModerator,
-  kickUser,
-  banUser,
-  historyVideos,
-  isHistoryLoading,
-  playlistVideos,
-  isPlaylistLoading,
-  removePlaylistItem,
-  movePlaylistItem,
-  isController, // Destructure new prop
-}: ChatTabProps) {
-  const [openMenuFor, setOpenMenuFor] = useState<string | null>(null);
+export default function ChatTab() {
+  // ✨ 3. State that controls the UI of this component now lives here.
+  const [activeTab, setActiveTab] = useState<'chat' | 'playlists' | 'history' | 'members'>('chat');
+  
+  // ✨ 4. Data needed by this component (or its direct children) is pulled from the context.
+  const { members } = useRoom();
 
   const panelVariants = {
     hidden: { opacity: 0, y: 10 },
@@ -81,48 +45,27 @@ export default function ChatTab({
             transition={{ duration: 0.15 }}
             className="h-full w-full absolute"
           >
+            {/* ✨ 5. The child panels no longer receive any props. 
+                   They will be refactored next to use the useRoom() hook themselves. */}
             {activeTab === 'chat' && (
-              <ChatMessagesPanel
-                messages={messages}
-                sendChatMessage={sendChatMessage}
-              />
+              <ChatMessagesPanel />
             )}
 
             {activeTab === 'playlists' && (
               <div className="h-full overflow-y-auto">
-                <PlaylistsPanel
-                  viewMode={viewMode}
-                  setViewMode={setViewMode}
-                  videos={playlistVideos}
-                  isLoading={isPlaylistLoading}
-                  onRemovePlaylistItem={removePlaylistItem}
-                  onMovePlaylistItem={movePlaylistItem}
-                  isController={isController} // Pass to PlaylistsPanel
-                />
+                <PlaylistsPanel />
               </div>
             )}
 
             {activeTab === 'history' && (
               <div className="h-full overflow-y-auto px-4 py-6">
-                <HistoryPanel 
-                  videos={historyVideos} 
-                  isLoading={isHistoryLoading} 
-                />
+                <HistoryPanel />
               </div>
             )}
 
             {activeTab === 'members' && (
               <div className="h-full overflow-y-auto px-4 py-6">
-                <MembersPanel
-                  members={members}
-                  currentUserId={currentUserId}
-                  openMenuFor={openMenuFor}
-                  setOpenMenuFor={setOpenMenuFor}
-                  makeModerator={makeModerator}
-                  removeModerator={removeModerator}
-                  kickUser={kickUser}
-                  banUser={banUser}
-                />
+                <MembersPanel />
               </div>
             )}
           </motion.div>

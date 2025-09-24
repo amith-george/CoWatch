@@ -20,6 +20,8 @@ export interface ChatMessage {
   role?: MemberRole;             
 }
 
+export type SearchPlatform = 'youtube' | 'twitch';
+
 /**
  * --- UPDATED ---
  * This type now more accurately reflects the complete Room object

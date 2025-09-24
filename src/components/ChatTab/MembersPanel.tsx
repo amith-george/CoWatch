@@ -1,3 +1,5 @@
+// src/components/ChatTab/MembersPanel.tsx
+
 'use client';
 
 import {
@@ -10,10 +12,10 @@ import {
   NoSymbolIcon,
 } from '@heroicons/react/24/solid';
 import { Member } from '@/types/room';
-import { useRef, useEffect, useMemo } from 'react';
+import { useRef, useEffect, useMemo, useState } from 'react';
+import { useRoom } from '@/contexts/RoomContext'; 
 
-// --- UPDATED AVATAR COMPONENT ---
-// It now accepts a 'role' to determine the background color.
+// This sub-component remains unchanged
 const UserAvatar = ({ username, role }: { username:string; role: string; }) => {
   const initial = username.charAt(0).toUpperCase();
   
@@ -33,28 +35,18 @@ const UserAvatar = ({ username, role }: { username:string; role: string; }) => {
   );
 };
 
+export default function MembersPanel() {
+  const {
+    members,
+    currentUserId,
+    makeModerator,
+    removeModerator,
+    kickUser,
+    banUser,
+  } = useRoom();
 
-interface MembersPanelProps {
-  members: Member[];
-  currentUserId: string;
-  openMenuFor: string | null;
-  setOpenMenuFor: (id: string | null) => void;
-  makeModerator: (targetUserId: string) => void;
-  removeModerator: (targetUserId: string) => void;
-  kickUser: (targetUserId: string) => void;
-  banUser: (targetUserId: string) => void;
-}
+  const [openMenuFor, setOpenMenuFor] = useState<string | null>(null);
 
-export default function MembersPanel({
-  members,
-  currentUserId,
-  openMenuFor,
-  setOpenMenuFor,
-  makeModerator,
-  removeModerator,
-  kickUser,
-  banUser,
-}: MembersPanelProps) {
   const menuRef = useRef<HTMLDivElement>(null);
 
   const isHost = members.some(m => m.role === 'Host' && m.userId === currentUserId);
@@ -75,14 +67,14 @@ export default function MembersPanel({
   }, [openMenuFor, setOpenMenuFor]);
 
   const sortedMembers = useMemo(() => {
-    const roleOrder = {
+    const roleOrder: { [key: string]: number } = {
       'Host': 1,
       'Moderator': 2,
       'Participant': 3,
     };
     return [...members].sort((a, b) => {
-      const orderA = roleOrder[a.role as keyof typeof roleOrder] || 99;
-      const orderB = roleOrder[b.role as keyof typeof roleOrder] || 99;
+      const orderA = roleOrder[a.role] || 99;
+      const orderB = roleOrder[b.role] || 99;
       const roleDifference = orderA - orderB;
       if (roleDifference !== 0) {
         return roleDifference;
@@ -92,7 +84,7 @@ export default function MembersPanel({
   }, [members]);
 
   const canManage = (member: Member) => {
-    if (member.userId === currentUserId || member.role === 'Host') {
+    if (!currentUserId || member.userId === currentUserId || member.role === 'Host') {
         return false;
     }
     if (isHost) {
@@ -126,11 +118,9 @@ export default function MembersPanel({
               openMenuFor === member.userId ? 'bg-gray-800' : ''
             }`}
           >
-            {/* --- FIX: Pass the member's role to the UserAvatar --- */}
             <UserAvatar username={member.username} role={member.role} />
             <div className="ml-3 flex-grow">
               <p className="font-semibold text-white">{member.username}</p>
-              {/* --- FIX: Dynamically set the color of the role text --- */}
               <p className={`text-sm font-medium ${
                   member.role === 'Host' ? 'text-yellow-400' :
                   member.role === 'Moderator' ? 'text-sky-400' :

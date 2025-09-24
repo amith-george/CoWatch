@@ -1,17 +1,13 @@
-// MessagePanel.tsx
+// src/components/ChatTab/MessagePanel.tsx
 
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { ChatMessage, MemberRole } from '@/types/room';
+import { MemberRole } from '@/types/room';
 import TextareaAutosize from 'react-textarea-autosize';
+import { useRoom } from '@/contexts/RoomContext'; 
 
-interface ChatMessagesPanelProps {
-  messages: ChatMessage[];
-  sendChatMessage: (msg: string) => void;
-}
 
-// Helper function to determine username color based on role
 const getRoleColor = (role?: MemberRole) => {
   switch (role) {
     case 'Host':
@@ -19,12 +15,15 @@ const getRoleColor = (role?: MemberRole) => {
     case 'Moderator':
       return 'text-blue-400';
     default:
-      // Fallback color for 'Participant' or undefined roles
       return 'text-gray-400';
   }
 };
 
-export default function ChatMessagesPanel({ messages, sendChatMessage }: ChatMessagesPanelProps) {
+export default function ChatMessagesPanel() {
+  // ✨ 3. Get data and functions from the context.
+  const { messages, sendChatMessage } = useRoom();
+
+  // Local state for the input field remains here.
   const [chatMessage, setChatMessage] = useState('');
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -37,6 +36,7 @@ export default function ChatMessagesPanel({ messages, sendChatMessage }: ChatMes
     }
   };
 
+  // This sophisticated auto-scroll logic remains unchanged and works perfectly.
   useEffect(() => {
     const container = messagesContainerRef.current;
     if (!container) return;
@@ -52,11 +52,11 @@ export default function ChatMessagesPanel({ messages, sendChatMessage }: ChatMes
     prevMessagesCountRef.current = messages.length;
   }, [messages]);
 
+  // The JSX remains the same, as it now uses the 'messages' variable from the context.
   return (
     <div className="relative h-full flex flex-col">
       <div 
         ref={messagesContainerRef}
-        // --- FIX: Conditionally set overflow to prevent scrolling when empty ---
         className={`chat-messages-container flex-1 px-4 py-4 space-y-2 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent min-h-0 ${
           messages.length > 0 ? 'overflow-y-auto' : 'overflow-y-hidden'
         }`}
