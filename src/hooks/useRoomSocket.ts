@@ -5,28 +5,18 @@ import { socket } from '@/utils/socket';
 import { ChatMessage, Member } from '@/types/room';
 import { toast } from 'react-toastify';
 
-// Define a type for the player's state object for type safety
 export interface PlayerState {
   time: number;
   status: 0 | 1 | 2 | 3 | -1 | 5;
 }
 
-// Define a type for the complete initial state payload
 export interface InitialState extends PlayerState {
-  videoUrl?: string; // videoUrl is optional for other sync events
+  videoUrl?: string;
 }
 
-// Define a type for the screen share request
 export interface ScreenShareRequest {
   requesterId: string;
   requesterUsername: string;
-}
-
-// FIX: Added a specific type for messages fetched from the backend API.
-interface StoredMessage {
-  text: string;
-  username: string;
-  role: string;
 }
 
 export function useRoomSocket(
@@ -50,13 +40,11 @@ export function useRoomSocket(
   const hasJoined = useRef(false);
 
   useEffect(() => {
-    // Sync state if initial data changes after fetch
     setHistory(initialHistory);
     setCurrentVideoUrl(initialVideoUrl);
     setPlaylist(initialPlaylist);
   }, [initialHistory, initialVideoUrl, initialPlaylist]);
 
-  // Fetch stored messages from backend when roomId is available
   useEffect(() => {
     const fetchStoredMessages = async () => {
       if (!roomId) return;
@@ -65,12 +53,9 @@ export function useRoomSocket(
         if (!res.ok) throw new Error('Failed to fetch messages');
         const data = await res.json();
         
-        // FIX: Replaced 'any' with the specific 'StoredMessage' type.
-        const storedMessages: ChatMessage[] = data.messages.map((msg: StoredMessage) => ({
-          type: 'user',
-          text: msg.text,
-          username: msg.username,
-          role: msg.role,
+        const storedMessages: ChatMessage[] = data.messages.map((msg: any) => ({
+          ...msg,
+          type: 'user', // Add the client-side type property
         }));
 
         setMessages(storedMessages);
@@ -82,7 +67,6 @@ export function useRoomSocket(
     fetchStoredMessages();
   }, [roomId]);
 
-  // Socket connection + real-time message handling
   useEffect(() => {
     if (!socket.connected) {
       socket.connect();
@@ -126,8 +110,9 @@ export function useRoomSocket(
     socket.on('getControllerState', handleGetControllerState);
 
     socket.on('membersUpdate', (data) => setMembers(data.members));
-    socket.on('chatMessage', (data) => {
-      setMessages((prev) => [...prev, { type: 'user', text: data.text, username: data.username, role: data.role }]);
+    
+    socket.on('chatMessage', (newMessage: ChatMessage) => {
+      setMessages((prev) => [...prev, { ...newMessage, type: 'user' }]);
     });
 
     const handleHistoryUpdate = ({ history: newHistory }: { history: string[] }) => setHistory(newHistory);
@@ -216,9 +201,9 @@ export function useRoomSocket(
   );
 
   const sendChatMessage = useCallback(
-    (text: string) => {
+    (text: string, replyTo?: { messageId: string; senderName: string; content: string }) => {
       if (text.trim() && username) {
-        socket.emit('chatMessage', { roomId, text, username });
+        socket.emit('chatMessage', { roomId, text, username, replyTo });
       }
     },
     [roomId, username]

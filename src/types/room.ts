@@ -12,21 +12,25 @@ export interface Member extends RoomUser {
   socketId: string;
 }
 
-// Chat message type used in sockets and UI
+
 export interface ChatMessage {
-  type: 'system' | 'user';       // 'system' for join/leave notices, 'user' for chat
-  text: string;                  // actual text of the message
-  username?: string;             // who sent the message (optional for system)
-  role?: MemberRole;             
+  _id: string;
+  type: 'system' | 'user'; 
+  content: string;
+  senderId: string;
+  senderName: string; 
+  senderRole: MemberRole; 
+  sentAt: string; 
+  replyTo?: {
+    messageId: string;
+    senderName: string;
+    content: string;
+  };
 }
+
 
 export type SearchPlatform = 'youtube' | 'twitch';
 
-/**
- * --- UPDATED ---
- * This type now more accurately reflects the complete Room object
- * received from your backend API. Renamed from RoomData for clarity.
- */
 export interface Room {
   _id: string;
   roomId: string;
@@ -44,13 +48,6 @@ export interface Room {
   expiresAt: string;
 }
 
-/**
- * --- UPDATED ---
- * This type now matches the standardized response from your YouTube service.
- * - `id` is now `videoId` for clarity.
- * - `thumbnail` is now `thumbnailUrl`.
- * - Added `videoUrl` for convenience.
- */
 export interface VideoItem {
   videoId: string;
   thumbnailUrl: string;

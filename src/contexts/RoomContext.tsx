@@ -14,19 +14,14 @@ import {
 } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
-
-// Import all the hooks that will now be centralized here
 import { useRoomData } from '@/hooks/useRoomData';
 import { useRoomSocket, PlayerState, ScreenShareRequest } from '@/hooks/useRoomSocket';
 import { useScreenShare } from '@/hooks/useScreenShare';
 import { useCountdown } from '@/hooks/useCountdown';
 import { useVideoMetadata } from '@/hooks/useVideoMetadata';
-
-// Import all necessary types
 import { Room, Member, ChatMessage, VideoItem } from '@/types/room';
 import { PlayerRef } from '@/components/VideoPlayer';
 
-// Custom component for the screen share request toast (copied from RoomClient)
 const RequestToast = ({ request, onAccept, onDecline }: {
   request: ScreenShareRequest;
   onAccept: () => void;
@@ -45,9 +40,6 @@ const RequestToast = ({ request, onAccept, onDecline }: {
   </div>
 );
 
-
-// 1. DEFINE THE SHAPE OF THE CONTEXT DATA
-// This interface includes all the state and functions that our components will need.
 interface RoomContextType {
   roomId: string;
   roomData: Room | null;
@@ -59,7 +51,6 @@ interface RoomContextType {
   setUsername: (name: string | null) => void;
   isController: boolean;
   isHost: boolean;
-
   playerRef: React.RefObject<PlayerRef>;
   currentVideoUrl: string;
   currentVideoMetadata: VideoItem | null;
@@ -69,11 +60,15 @@ interface RoomContextType {
   isHistoryLoading: boolean;
   viewMode: 'list' | 'shuffle';
   setViewMode: (mode: 'list' | 'shuffle') => void;
-
   messages: ChatMessage[];
   playerState: PlayerState | null;
 
-  sendChatMessage: (text: string) => void;
+  // --- UPDATED sendChatMessage signature ---
+  sendChatMessage: (
+    text: string, 
+    replyTo?: { messageId: string; senderName: string; content: string }
+  ) => void;
+  
   playNextVideo: () => void;
   changeVideo: (url: string) => void;
   addToPlaylist: (url: string) => void;
@@ -85,7 +80,6 @@ interface RoomContextType {
   banUser: (userId: string) => void;
   updateUsername: (newName: string) => void;
   sendPlayerStateChange: (state: PlayerState) => void;
-
   isSharing: boolean;
   isViewing: boolean;
   localStream: MediaStream | null;
@@ -97,18 +91,14 @@ interface RoomContextType {
   screenShareRequest: ScreenShareRequest | null;
 }
 
-// 2. CREATE THE CONTEXT
 const RoomContext = createContext<RoomContextType | undefined>(undefined);
 
-// 3. CREATE THE PROVIDER COMPONENT
-// This component will wrap our room page and manage all the state.
 export function RoomProvider({ children, roomId }: { children: ReactNode; roomId: string }) {
   const router = useRouter();
   const [username, setUsername] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'shuffle'>('list');
   const playerRef = useRef<PlayerRef | null>(null);
 
-  // --- All hooks from RoomClient are now centralized here ---
   const { roomData, userId, loading, error } = useRoomData(roomId);
   
   const initialHistory = useMemo(() => roomData?.history || [], [roomData]);
@@ -138,7 +128,7 @@ export function RoomProvider({ children, roomId }: { children: ReactNode; roomId
     playerState,
     sendPlayerStateChange,
     playNextVideo,
-    sendChatMessage,
+    sendChatMessage, // This now has the new signature from your hook
     changeVideo,
     addToPlaylist,
     makeModerator,
@@ -164,7 +154,6 @@ export function RoomProvider({ children, roomId }: { children: ReactNode; roomId
   const { videos: historyVideos, isLoading: isHistoryLoading } = useVideoMetadata(history, { shouldReverse: true });
   const { videos: playlistVideos, isLoading: isPlaylistLoading } = useVideoMetadata(playlist);
 
-  // --- Memos and Effects from RoomClient are also centralized ---
   const isController = useMemo(() => {
     if (!userId || !members.length) return false;
     const self = members.find(m => m.userId === userId);
@@ -177,7 +166,7 @@ export function RoomProvider({ children, roomId }: { children: ReactNode; roomId
     return self?.role === 'Host';
   }, [userId, members]);
 
-  const { videos: searchResults } = useVideoMetadata(playlist); // Placeholder, you might need a different way to get search results here
+  const { videos: searchResults } = useVideoMetadata(playlist);
   const currentVideoMetadata = useMemo(() => {
     if (!currentVideoUrl) return null;
     const allVideos: VideoItem[] = [...searchResults, ...historyVideos, ...playlistVideos];
@@ -198,7 +187,6 @@ export function RoomProvider({ children, roomId }: { children: ReactNode; roomId
     }
   }, [username, roomData, userId, members]);
   
-  // Logic for screen share toast notifications
   useEffect(() => {
     if (isHost && screenShareRequest) {
       const handleAccept = () => {
@@ -223,8 +211,6 @@ export function RoomProvider({ children, roomId }: { children: ReactNode; roomId
     }
   }, [screenSharePermissionGranted, startSharing, resetScreenSharePermission]);
 
-  // 4. ASSEMBLE THE VALUE OBJECT
-  // This object contains all the data and functions to be broadcast to child components.
   const value = {
     roomId,
     roomData,
@@ -265,7 +251,7 @@ export function RoomProvider({ children, roomId }: { children: ReactNode; roomId
     screenStream,
     startSharing,
     stopSharing,
-    requestScreenShare, // Added for completeness
+    requestScreenShare,
     respondToScreenShare,
     screenShareRequest,
   };
@@ -273,8 +259,6 @@ export function RoomProvider({ children, roomId }: { children: ReactNode; roomId
   return <RoomContext.Provider value={value as RoomContextType}>{children}</RoomContext.Provider>;
 }
 
-// 5. CREATE A CUSTOM HOOK FOR EASY ACCESS
-// This hook lets any component easily access the context's data.
 export function useRoom() {
   const context = useContext(RoomContext);
   if (context === undefined) {
