@@ -28,8 +28,8 @@ export default function RoomClient() {
     timeLeft,
     username,
     setUsername,
-    members,
-    currentUserId, // Get the currentUserId to check for re-joining
+    // members, // Removed unused variable
+    currentUserId,
     playerRef,
     currentVideoUrl,
     currentVideoMetadata,
@@ -58,21 +58,16 @@ export default function RoomClient() {
   const { results: searchResults, isLoading: isSearchLoading, isPopular, searchQuery, search: searchVideos } = useSearch(searchPlatform);
   useScrollLock();
 
-  // ✨ FIX 1: This useEffect automatically finds and sets the username for returning users.
   useEffect(() => {
-    // Run this check only when the room data is loaded but the username isn't set yet.
     if (roomData && currentUserId && !username) {
-      // Combine all known users from the initial room data fetch.
       const allUsersInRoom = [
         roomData.host,
         ...roomData.moderators,
         ...roomData.participants,
       ];
 
-      // Find if the current user (identified by userId from localStorage) is in that list.
       const returningUser = allUsersInRoom.find(user => user?.userId === currentUserId);
 
-      // If they are found, set their username automatically, bypassing the name modal.
       if (returningUser) {
         setUsername(returningUser.username);
       }
@@ -129,13 +124,12 @@ export default function RoomClient() {
       <div className="flex bg-[#1f1f1f] min-h-screen text-white items-center justify-center">
         <Sidebar username={username} onProfileClick={() => {}} onScreenShareClick={() => {}} />
         <main className="ml-24 flex-1">
-          {/* You can add a more detailed loading skeleton here */}
+          {/* Loading Skeleton */}
         </main>
       </div>
     );
   }
 
-  // ✨ FIX 2: The logic to show the NameBox is now much simpler.
   const needsToJoin = !username;
   const showInvite = isController && isInviteVisible;
 

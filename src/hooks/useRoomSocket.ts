@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { socket } from '@/utils/socket';
-import { ChatMessage, Member } from '@/types/room';
+import { ChatMessage, Member, MemberRole } from '@/types/room';
 import { toast } from 'react-toastify';
 
 export interface PlayerState {
@@ -17,6 +17,16 @@ export interface InitialState extends PlayerState {
 export interface ScreenShareRequest {
   requesterId: string;
   requesterUsername: string;
+}
+
+interface ApiChatMessage {
+  _id: string;
+  senderId: string;
+  senderName: string;
+  content: string;
+  sentAt: string;
+  senderRole: MemberRole; 
+  replyTo?: { messageId: string; senderName: string; content: string };
 }
 
 export function useRoomSocket(
@@ -51,11 +61,11 @@ export function useRoomSocket(
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API}/messages/${roomId}`);
         if (!res.ok) throw new Error('Failed to fetch messages');
-        const data = await res.json();
+        const data: { messages: ApiChatMessage[] } = await res.json();
         
-        const storedMessages: ChatMessage[] = data.messages.map((msg: any) => ({
+        const storedMessages: ChatMessage[] = data.messages.map((msg: ApiChatMessage) => ({
           ...msg,
-          type: 'user', // Add the client-side type property
+          type: 'user',
         }));
 
         setMessages(storedMessages);
