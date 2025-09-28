@@ -100,21 +100,20 @@ const VideoPlayer = forwardRef<PlayerRef, VideoPlayerProps>(
         setIsDebouncing(false);
       }, 500);
     };
-    
+
     if (stream) {
       return (
         <div className="relative w-full h-full bg-black">
-          <video ref={videoRef} autoPlay playsInline className="w-full h-full" />
-          {isSharing && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
-              <button
-                onClick={onStopSharing}
-                className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition"
-              >
-                Stop Sharing
-              </button>
-            </div>
-          )}
+          <video
+            key={stream.id}
+            ref={videoRef}
+            autoPlay
+            playsInline
+            controls
+            muted={isSharing}
+            className="w-full h-full"
+          />
+          {/* The Stop Sharing button has been removed from here */}
         </div>
       );
     }
@@ -126,7 +125,7 @@ const VideoPlayer = forwardRef<PlayerRef, VideoPlayerProps>(
         </div>
       );
     }
-    
+
     if (isAgeRestricted) {
       return (
         <div className="w-full h-full flex flex-col items-center justify-center bg-black text-white p-4">
