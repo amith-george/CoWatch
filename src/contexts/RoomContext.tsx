@@ -40,7 +40,7 @@ const RequestToast = ({ request, onAccept, onDecline }: {
   </div>
 );
 
-interface RoomContextType {
+export interface RoomContextType {
   roomId: string;
   roomData: Room | null;
   loading: boolean;
@@ -51,35 +51,13 @@ interface RoomContextType {
   setUsername: (name: string | null) => void;
   isController: boolean;
   isHost: boolean;
-  playerRef: React.RefObject<PlayerRef>;
-  currentVideoUrl: string;
-  currentVideoMetadata: VideoItem | null;
-  playlistVideos: VideoItem[];
-  historyVideos: VideoItem[];
-  isPlaylistLoading: boolean;
-  isHistoryLoading: boolean;
   viewMode: 'list' | 'shuffle';
   setViewMode: (mode: 'list' | 'shuffle') => void;
-  messages: ChatMessage[];
-  playerState: PlayerState | null;
-
-  // --- UPDATED sendChatMessage signature ---
-  sendChatMessage: (
-    text: string, 
-    replyTo?: { messageId: string; senderName: string; content: string }
-  ) => void;
-  
-  playNextVideo: () => void;
-  changeVideo: (url: string) => void;
-  addToPlaylist: (url: string) => void;
-  removePlaylistItem: (url: string) => void;
-  movePlaylistItem: (url: string, direction: 'up' | 'down') => void;
   makeModerator: (userId: string) => void;
   removeModerator: (userId: string) => void;
   kickUser: (userId: string) => void;
   banUser: (userId: string) => void;
   updateUsername: (newName: string) => void;
-  sendPlayerStateChange: (state: PlayerState) => void;
   isSharing: boolean;
   isViewing: boolean;
   localStream: MediaStream | null;
@@ -91,7 +69,34 @@ interface RoomContextType {
   screenShareRequest: ScreenShareRequest | null;
 }
 
+export interface VideoContextType {
+  playerRef: React.RefObject<PlayerRef | null>;
+  currentVideoUrl: string;
+  currentVideoMetadata: VideoItem | null;
+  playlistVideos: VideoItem[];
+  historyVideos: VideoItem[];
+  isPlaylistLoading: boolean;
+  isHistoryLoading: boolean;
+  playerState: PlayerState | null;
+  playNextVideo: () => void;
+  changeVideo: (url: string) => void;
+  addToPlaylist: (url: string) => void;
+  removePlaylistItem: (url: string) => void;
+  movePlaylistItem: (url: string, direction: 'up' | 'down') => void;
+  sendPlayerStateChange: (state: PlayerState) => void;
+}
+
+export interface ChatContextType {
+  messages: ChatMessage[];
+  sendChatMessage: (
+    text: string, 
+    replyTo?: { messageId: string; senderName: string; content: string }
+  ) => void;
+}
+
 const RoomContext = createContext<RoomContextType | undefined>(undefined);
+const VideoContext = createContext<VideoContextType | undefined>(undefined);
+const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
 export function RoomProvider({ children, roomId }: { children: ReactNode; roomId: string }) {
   const router = useRouter();
@@ -128,7 +133,7 @@ export function RoomProvider({ children, roomId }: { children: ReactNode; roomId
     playerState,
     sendPlayerStateChange,
     playNextVideo,
-    sendChatMessage, // This now has the new signature from your hook
+    sendChatMessage,
     changeVideo,
     addToPlaylist,
     makeModerator,
@@ -166,13 +171,12 @@ export function RoomProvider({ children, roomId }: { children: ReactNode; roomId
     return self?.role === 'Host';
   }, [userId, members]);
 
-  const { videos: searchResults } = useVideoMetadata(playlist);
   const currentVideoMetadata = useMemo(() => {
     if (!currentVideoUrl) return null;
-    const allVideos: VideoItem[] = [...searchResults, ...historyVideos, ...playlistVideos];
-    const videoMap = new Map(allVideos.map(video => [video.videoUrl, video]));
-    return videoMap.get(currentVideoUrl) || null;
-  }, [currentVideoUrl, searchResults, historyVideos, playlistVideos]);
+    return playlistVideos.find(v => v.videoUrl === currentVideoUrl) || 
+           historyVideos.find(v => v.videoUrl === currentVideoUrl) || 
+           null;
+  }, [currentVideoUrl, playlistVideos, historyVideos]);
 
   useEffect(() => {
     if (!loading && (error || !roomData)) {
@@ -211,7 +215,7 @@ export function RoomProvider({ children, roomId }: { children: ReactNode; roomId
     }
   }, [screenSharePermissionGranted, startSharing, resetScreenSharePermission]);
 
-  const value = {
+  const roomValue = useMemo<RoomContextType>(() => ({
     roomId,
     roomData,
     loading,
@@ -222,29 +226,13 @@ export function RoomProvider({ children, roomId }: { children: ReactNode; roomId
     setUsername,
     isController,
     isHost,
-    playerRef,
-    currentVideoUrl,
-    currentVideoMetadata,
-    playlistVideos,
-    historyVideos,
-    isPlaylistLoading,
-    isHistoryLoading,
     viewMode,
     setViewMode,
-    messages,
-    playerState,
-    sendChatMessage,
-    playNextVideo,
-    changeVideo,
-    addToPlaylist,
-    removePlaylistItem,
-    movePlaylistItem,
     makeModerator,
     removeModerator,
     kickUser,
     banUser,
     updateUsername,
-    sendPlayerStateChange,
     isSharing,
     isViewing,
     localStream,
@@ -254,15 +242,70 @@ export function RoomProvider({ children, roomId }: { children: ReactNode; roomId
     requestScreenShare,
     respondToScreenShare,
     screenShareRequest,
-  };
+  }), [
+    roomId, roomData, loading, timeLeft, members, userId, username, setUsername,
+    isController, isHost, viewMode, setViewMode, makeModerator, removeModerator,
+    kickUser, banUser, updateUsername, isSharing, isViewing, localStream, screenStream,
+    startSharing, stopSharing, requestScreenShare, respondToScreenShare, screenShareRequest
+  ]);
 
-  return <RoomContext.Provider value={value as RoomContextType}>{children}</RoomContext.Provider>;
+  const videoValue = useMemo<VideoContextType>(() => ({
+    playerRef,
+    currentVideoUrl,
+    currentVideoMetadata,
+    playlistVideos,
+    historyVideos,
+    isPlaylistLoading,
+    isHistoryLoading,
+    playerState,
+    playNextVideo,
+    changeVideo,
+    addToPlaylist,
+    removePlaylistItem,
+    movePlaylistItem,
+    sendPlayerStateChange,
+  }), [
+    playerRef, currentVideoUrl, currentVideoMetadata, playlistVideos, historyVideos,
+    isPlaylistLoading, isHistoryLoading, playerState, playNextVideo, changeVideo,
+    addToPlaylist, removePlaylistItem, movePlaylistItem, sendPlayerStateChange
+  ]);
+
+  const chatValue = useMemo<ChatContextType>(() => ({
+    messages,
+    sendChatMessage,
+  }), [messages, sendChatMessage]);
+
+  return (
+    <RoomContext.Provider value={roomValue}>
+      <VideoContext.Provider value={videoValue}>
+        <ChatContext.Provider value={chatValue}>
+          {children}
+        </ChatContext.Provider>
+      </VideoContext.Provider>
+    </RoomContext.Provider>
+  );
 }
 
 export function useRoom() {
   const context = useContext(RoomContext);
   if (context === undefined) {
     throw new Error('useRoom must be used within a RoomProvider');
+  }
+  return context;
+}
+
+export function useVideo() {
+  const context = useContext(VideoContext);
+  if (context === undefined) {
+    throw new Error('useVideo must be used within a RoomProvider');
+  }
+  return context;
+}
+
+export function useChat() {
+  const context = useContext(ChatContext);
+  if (context === undefined) {
+    throw new Error('useChat must be used within a RoomProvider');
   }
   return context;
 }

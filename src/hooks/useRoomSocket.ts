@@ -68,7 +68,13 @@ export function useRoomSocket(
           type: 'user',
         }));
 
-        setMessages(storedMessages);
+        setMessages((prev) => {
+          const existingIds = new Set(prev.map(m => m._id));
+          const newHistoricalMessages = storedMessages.filter(m => !existingIds.has(m._id));
+          const updated = [...newHistoricalMessages, ...prev];
+          if (updated.length > 200) return updated.slice(updated.length - 200);
+          return updated;
+        });
       } catch (err) {
         console.error('Error loading stored messages:', err);
       }
@@ -122,7 +128,11 @@ export function useRoomSocket(
     socket.on('membersUpdate', (data) => setMembers(data.members));
     
     socket.on('chatMessage', (newMessage: ChatMessage) => {
-      setMessages((prev) => [...prev, { ...newMessage, type: 'user' }]);
+      setMessages((prev) => {
+        const updated = [...prev, { ...newMessage, type: 'user' }];
+        if (updated.length > 200) return updated.slice(updated.length - 200);
+        return updated;
+      });
     });
 
     const handleHistoryUpdate = ({ history: newHistory }: { history: string[] }) => setHistory(newHistory);

@@ -1,6 +1,6 @@
 // hooks/useSearch.ts
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { fetchPopularVideos, searchVideosByQuery, fetchVideoById } from '@/services/youtube.service';
 import { searchTwitchChannels, fetchTwitchMetadata } from '@/services/twitch.service';
 import { VideoItem, SearchPlatform } from '@/types/room';
@@ -22,6 +22,8 @@ export const useSearch = (platform: SearchPlatform) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isPopular, setIsPopular] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const loadPopular = async () => {
@@ -30,42 +32,56 @@ export const useSearch = (platform: SearchPlatform) => {
       setIsLoading(false);
     };
     loadPopular();
+    
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
   }, []);
 
-  const search = useCallback(
-    async (query: string) => {
-      setIsLoading(true);
-      setSearchQuery(query);
+  const search = useCallback((query: string) => {
+    setSearchQuery(query);
+    
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
 
-      if (!query.trim()) {
-        setIsPopular(true);
-        setResults(await fetchPopularVideos());
+    setIsLoading(true);
+
+    debounceTimerRef.current = setTimeout(async () => {
+      try {
+        if (!query.trim()) {
+          setIsPopular(true);
+          setResults(await fetchPopularVideos());
+          return;
+        }
+        
+        setIsPopular(false);
+        const urlType = getUrlType(query);
+
+        if (urlType === 'youtube') {
+          const videoId = extractVideoId(query);
+          const video = videoId ? await fetchVideoById(videoId) : null;
+          setResults(video ? [video] : []);
+        } else if (urlType === 'twitch') {
+          const video = await fetchTwitchMetadata(query);
+          setResults(video ? [video] : []);
+        } else {
+          const searchResults =
+            platform === 'youtube'
+              ? await searchVideosByQuery(query)
+              : await searchTwitchChannels(query);
+          setResults(searchResults);
+        }
+      } catch (err) {
+        console.error('Search failed:', err);
+        setResults([]);
+      } finally {
         setIsLoading(false);
-        return;
       }
-      
-      setIsPopular(false);
-      const urlType = getUrlType(query);
-
-      if (urlType === 'youtube') {
-        const videoId = extractVideoId(query);
-        const video = videoId ? await fetchVideoById(videoId) : null;
-        setResults(video ? [video] : []);
-      } else if (urlType === 'twitch') {
-        const video = await fetchTwitchMetadata(query);
-        setResults(video ? [video] : []);
-      } else {
-        const searchResults =
-          platform === 'youtube'
-            ? await searchVideosByQuery(query)
-            : await searchTwitchChannels(query);
-        setResults(searchResults);
-      }
-
-      setIsLoading(false);
-    },
-    [platform]
-  );
+    }, 1000); // 1-second debounce
+  }, [platform]);
 
   return { results, isLoading, isPopular, searchQuery, search };
 };

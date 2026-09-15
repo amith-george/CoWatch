@@ -5,7 +5,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { MemberRole } from '@/types/room';
 import TextareaAutosize from 'react-textarea-autosize';
-import { useRoom } from '@/contexts/RoomContext';
+import { useChat } from '@/contexts/RoomContext';
 import { ChatMessage } from '@/types/room';
 import { ArrowUturnLeftIcon as ReplyIcon, XMarkIcon as XIcon, FaceSmileIcon } from '@heroicons/react/24/outline';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -24,7 +24,7 @@ const getRoleColor = (role?: MemberRole) => {
 
 
 export default function ChatMessagesPanel() {
-  const { messages, sendChatMessage } = useRoom();
+  const { messages, sendChatMessage } = useChat();
   const [chatMessage, setChatMessage] = useState('');
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);

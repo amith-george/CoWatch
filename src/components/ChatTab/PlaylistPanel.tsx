@@ -5,7 +5,7 @@
 import Image from 'next/image';
 import { useState, useEffect, memo, useRef } from 'react';
 import { ArrowsRightLeftIcon, EllipsisVerticalIcon, ListBulletIcon, MusicalNoteIcon } from '@heroicons/react/24/solid';
-import { useRoom } from '@/contexts/RoomContext';
+import { useRoom, useVideo } from '@/contexts/RoomContext';
 import { VideoItem } from '@/types/room';
 
 const PlaylistItemSkeleton = () => (
@@ -20,7 +20,8 @@ const PlaylistItemSkeleton = () => (
 
 // ✨ Memoized PlaylistItem is now fully self-contained
 const PlaylistItem = memo(({ video, index }: { video: VideoItem; index: number; }) => {
-  const { isController, movePlaylistItem, removePlaylistItem, playlistVideos } = useRoom();
+  const { isController } = useRoom();
+  const { movePlaylistItem, removePlaylistItem, playlistVideos } = useVideo();
   const [openMenu, setOpenMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -100,12 +101,8 @@ PlaylistItem.displayName = 'PlaylistItem';
 
 export default function PlaylistsPanel() {
   // ✨ Gets all its data from the context, no more props
-  const {
-    viewMode,
-    setViewMode,
-    playlistVideos,
-    isPlaylistLoading,
-  } = useRoom();
+  const { viewMode, setViewMode } = useRoom();
+  const { playlistVideos, isPlaylistLoading } = useVideo();
 
   // ✨ The problematic useEffect that manipulated the DOM is gone
 

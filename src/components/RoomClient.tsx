@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
-import { useRoom } from '@/contexts/RoomContext';
+import { useRoom, useVideo } from '@/contexts/RoomContext';
 
 // Custom Hooks
 import { useSearch } from '@/hooks/useSearch';
@@ -28,11 +28,7 @@ export default function RoomClient() {
     timeLeft,
     username,
     setUsername,
-    // members, // Removed unused variable
     currentUserId,
-    playerRef,
-    currentVideoUrl,
-    currentVideoMetadata,
     isSharing,
     localStream,
     isViewing,
@@ -42,13 +38,19 @@ export default function RoomClient() {
     stopSharing,
     startSharing,
     requestScreenShare,
+    updateUsername,
+  } = useRoom();
+
+  const {
+    playerRef,
+    currentVideoUrl,
+    currentVideoMetadata,
     changeVideo,
     addToPlaylist,
     playNextVideo,
     playerState,
     sendPlayerStateChange,
-    updateUsername,
-  } = useRoom();
+  } = useVideo();
 
   const [showUpdateNameModal, setShowUpdateNameModal] = useState(false);
   const [searchPlatform, setSearchPlatform] = useState<'youtube' | 'twitch'>('youtube');

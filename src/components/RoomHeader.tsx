@@ -81,11 +81,7 @@ export default function RoomHeader({
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchInput(value);
-    if (URL_REGEX.test(value)) {
-      onSearch(value);
-    } else if (value.trim() === '') {
-      onSearch('');
-    }
+    onSearch(value); // Live search enabled since it's debounced in useSearch
   };
 
   const togglePlatform = () => {

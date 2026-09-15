@@ -4,7 +4,7 @@
 
 import Image from 'next/image';
 import { ClockIcon } from '@heroicons/react/24/outline';
-import { useRoom } from '@/contexts/RoomContext'; 
+import { useVideo } from '@/contexts/RoomContext'; 
 
 
 const HistoryItemSkeleton = () => (
@@ -18,7 +18,7 @@ const HistoryItemSkeleton = () => (
 );
 
 export default function HistoryPanel() {
-  const { historyVideos, isHistoryLoading } = useRoom();
+  const { historyVideos, isHistoryLoading } = useVideo();
 
   if (isHistoryLoading) {
     return (

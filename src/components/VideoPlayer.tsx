@@ -70,7 +70,7 @@ const VideoPlayer = forwardRef<PlayerRef, VideoPlayerProps>(
     }, [stream]);
 
     useEffect(() => {
-      if (!isController && playerState) {
+      if (playerState) {
         setIsPlaying(playerState.status === 1);
         const player = (ref as React.RefObject<PlayerRef>)?.current;
         if (player && typeof player.getCurrentTime === 'function' && playerState.time !== undefined) {
@@ -81,7 +81,7 @@ const VideoPlayer = forwardRef<PlayerRef, VideoPlayerProps>(
           }
         }
       }
-    }, [playerState, isController, ref]);
+    }, [playerState, ref]);
 
     useEffect(() => {
       if (url) setIsWaitingForHost(false);
@@ -155,11 +155,11 @@ const VideoPlayer = forwardRef<PlayerRef, VideoPlayerProps>(
           controls
           onPlay={() => {
             setIsPlaying(true);
-            if (isController) emitStateUpdate(1);
+            if (isController && playerState?.status !== 1) emitStateUpdate(1);
           }}
           onPause={() => {
             setIsPlaying(false);
-            if (isController) emitStateUpdate(2);
+            if (isController && playerState?.status !== 2) emitStateUpdate(2);
           }}
           onEnded={() => {
             if (isController) {
@@ -169,7 +169,7 @@ const VideoPlayer = forwardRef<PlayerRef, VideoPlayerProps>(
             }
           }}
           onReady={() => {
-            if (!isController && playerState) {
+            if (playerState) {
               setIsPlaying(playerState.status === 1);
               const player = (ref as React.RefObject<PlayerRef>)?.current;
               if (player && typeof player.getCurrentTime === 'function' && playerState.time !== undefined) {

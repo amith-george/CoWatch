@@ -18,6 +18,9 @@ const getVideoSource = (url: string): 'youtube' | 'twitch' | 'unknown' => {
   return 'unknown';
 };
 
+// Module-level cache to prevent redownloading metadata for known videos
+const globalMetadataCache = new Map<string, VideoItem>();
+
 export function useVideoMetadata(
   videoUrls: string[],
   options: { shouldReverse?: boolean } = {}
@@ -27,32 +30,36 @@ export function useVideoMetadata(
   const { shouldReverse = false } = options;
 
   const getMetadata = useCallback(async (urls: string[]) => {
-    setIsLoading(true);
+    // 1. Deduplicate incoming URLs and identify what's missing from the cache
+    const uniqueUrls = Array.from(new Set(urls));
+    const missingUrls = uniqueUrls.filter(url => !globalMetadataCache.has(url));
 
-    // 1. Separate URLs by source (YouTube vs. Twitch)
-    const youtubeUrls = urls.filter(url => getVideoSource(url) === 'youtube');
-    const twitchUrls = urls.filter(url => getVideoSource(url) === 'twitch');
+    // 2. Fetch missing metadata if any
+    if (missingUrls.length > 0) {
+      setIsLoading(true);
+      const youtubeUrls = missingUrls.filter(url => getVideoSource(url) === 'youtube');
+      const twitchUrls = missingUrls.filter(url => getVideoSource(url) === 'twitch');
 
-    // 2. Create promises for all metadata fetches
-    const promises: Promise<(VideoItem | null)[]>[] = [];
+      const promises: Promise<(VideoItem | null)[]>[] = [];
 
-    // Batch fetch YouTube videos
-    if (youtubeUrls.length > 0) {
-      promises.push(fetchYouTubeMetadata(youtubeUrls));
+      if (youtubeUrls.length > 0) {
+        promises.push(fetchYouTubeMetadata(youtubeUrls));
+      }
+      if (twitchUrls.length > 0) {
+        promises.push(Promise.all(twitchUrls.map(fetchTwitchMetadata)));
+      }
+
+      const results = await Promise.all(promises);
+      const combined = results.flat().filter((v): v is VideoItem => v !== null);
+
+      // 3. Save fetched metadata to global cache
+      combined.forEach(video => {
+        globalMetadataCache.set(video.videoUrl, video);
+      });
     }
 
-    // Fetch Twitch videos individually and wrap in a Promise.all
-    if (twitchUrls.length > 0) {
-      promises.push(Promise.all(twitchUrls.map(fetchTwitchMetadata)));
-    }
-
-    // 3. Execute all promises concurrently and combine results
-    const results = await Promise.all(promises);
-    const combined = results.flat().filter((v): v is VideoItem => v !== null); // Flatten and remove nulls
-
-    // 4. Create a map for original order and set the state
-    const metadataMap = new Map(combined.map(v => [v.videoUrl, v]));
-    const orderedVideos = urls.map(url => metadataMap.get(url)).filter(Boolean) as VideoItem[];
+    // 4. Resolve all requested URLs from the cache to preserve order (and duplicates)
+    const orderedVideos = urls.map(url => globalMetadataCache.get(url)).filter(Boolean) as VideoItem[];
 
     setVideos(shouldReverse ? orderedVideos.reverse() : orderedVideos);
     setIsLoading(false);
