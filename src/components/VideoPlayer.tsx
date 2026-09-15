@@ -30,7 +30,6 @@ interface VideoPlayerProps {
   url?: string;
   stream?: MediaStream | null;
   isSharing?: boolean;
-  onStopSharing?: () => void;
   isController: boolean;
   onVideoEnded: () => void;
   isAgeRestricted?: boolean;
@@ -48,7 +47,6 @@ const VideoPlayer = forwardRef<PlayerRef, VideoPlayerProps>(
       url,
       stream,
       isSharing,
-      onStopSharing,
       isController,
       onVideoEnded,
       isAgeRestricted,

@@ -27,9 +27,10 @@ const TwitchLogo = () => (
 );
 
 
-const URL_REGEX = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be|twitch\.tv)\/.+$/;
 
-function formatTime(seconds: number) {
+
+function formatTime(seconds: number | null) {
+  if (seconds === null) return "--:--";
   const hrs = Math.floor(seconds / 3600);
   const mins = Math.floor((seconds % 3600) / 60);
   const secs = seconds % 60;
@@ -48,7 +49,7 @@ export default function RoomHeader({
   setSearchPlatform,
 }: {
   roomData: Room;
-  timeLeft: number;
+  timeLeft: number | null;
   roomId: string;
   onSearch: (query: string) => void;
   searchPlatform: SearchPlatform;

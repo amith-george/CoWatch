@@ -44,7 +44,7 @@ export interface RoomContextType {
   roomId: string;
   roomData: Room | null;
   loading: boolean;
-  timeLeft: number;
+  timeLeft: number | null;
   members: Member[];
   currentUserId: string | null;
   username: string | null;
