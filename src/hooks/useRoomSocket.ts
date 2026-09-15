@@ -65,8 +65,8 @@ export function useRoomSocket(
         
         const storedMessages: ChatMessage[] = data.messages.map((msg: ApiChatMessage) => ({
           ...msg,
-          type: 'user',
-        }));
+          type: 'user' as const,
+        } as ChatMessage));
 
         setMessages((prev) => {
           const existingIds = new Set(prev.map(m => m._id));
@@ -129,7 +129,7 @@ export function useRoomSocket(
     
     socket.on('chatMessage', (newMessage: ChatMessage) => {
       setMessages((prev) => {
-        const updated = [...prev, { ...newMessage, type: 'user' }];
+        const updated = [...prev, { ...newMessage, type: 'user' } as ChatMessage];
         if (updated.length > 200) return updated.slice(updated.length - 200);
         return updated;
       });
