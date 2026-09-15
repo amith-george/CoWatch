@@ -167,7 +167,6 @@ export default function RoomClient() {
                 url={currentVideoUrl}
                 stream={isSharing ? localStream : (isViewing ? screenStream : null)}
                 isSharing={isSharing}
-                onStopSharing={stopSharing}
                 isController={isController}
                 onVideoEnded={handleVideoEnded}
                 isAgeRestricted={currentVideoMetadata?.isAgeRestricted}
